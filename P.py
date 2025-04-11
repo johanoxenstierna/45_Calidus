@@ -16,12 +16,12 @@ REAL_SCALE = 0
 
 OBJ_TO_SHOW = []
 # OBJ_TO_SHOW.append('Calidus')  # JUST USE ALPHA in main
-# OBJ_TO_SHOW.append('Ogun')
-# OBJ_TO_SHOW.append('Venus')
+OBJ_TO_SHOW.append('Ogun')
+OBJ_TO_SHOW.append('Venus')
 OBJ_TO_SHOW.append('Nauvis')
 OBJ_TO_SHOW.append('GSS')
-# OBJ_TO_SHOW.append('Molli')
-# OBJ_TO_SHOW.append('Mars')
+OBJ_TO_SHOW.append('Molli')
+OBJ_TO_SHOW.append('Mars')
 # OBJ_TO_SHOW.append('Astro0')
 # OBJ_TO_SHOW.append('Astro0b')
 # OBJ_TO_SHOW.append('Jupiter')

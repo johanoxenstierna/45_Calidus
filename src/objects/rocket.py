@@ -215,12 +215,11 @@ class Rocket(AbstractObject, AbstractSSS):
 
         # ZORDERS ====================================
         zorders = np.full((len(xy),), fill_value=_s.zorders[-1])
-
         # ============================================
 
         _s.xy = np.concatenate((_s.xy, np.asarray(xy, dtype=np.float32)))
         _s.alphas = np.concatenate((_s.alphas, np.full((len(xy),), fill_value=0.5)))
-        _s.zorders = np.concatenate((_s.zorders, np.asarray(zorders)))
+        _s.zorders = np.concatenate((_s.zorders, zorders))
 
         p1_xy_debug = _s.p1.xy[_s.init_frame + len(_s.xy) - 1]  # THIS IS NOW THE CURRENT VALUE
         speed_i_debug = np.linalg.norm(np.array([_s.xy[-1, 0] - _s.xy[-2, 0], _s.xy[-1, 1] - _s.xy[-2, 1]]))
@@ -308,10 +307,18 @@ class Rocket(AbstractObject, AbstractSSS):
                 weights(w_p1_actual) * p1_actuall
         )
 
-        zorders = np.full((len(xy),), dtype=int, fill_value=9999)
+
+        # =============================================
+
         _s.xy = np.concatenate((_s.xy, np.asarray(xy)))
         _s.alphas = np.concatenate((_s.alphas, np.full((len(xy),), fill_value=0.99)))
-        _s.zorders = np.concatenate((_s.zorders, np.asarray(zorders)))
+
+        # ZORDERS =====================================
+        zorders = np.full((len(xy),), dtype=int, fill_value=_s.p1.zorders[_s.init_frame + len(_s.xy)] + 10)
+        vxy = np.gradient(xy, axis=1)
+        inds_neg = np.where(vxy[:, 1] <= 0)[0]  # when they move up, they move BEHIND
+        zorders[inds_neg] -= 20
+        _s.zorders = np.concatenate((_s.zorders, zorders))
 
     def gen_color(_s):
         color = np.linspace(1, 0.99, len(_s.xy))
