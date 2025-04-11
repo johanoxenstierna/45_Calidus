@@ -10,5 +10,5 @@ PyQt6
 #PyQt6_sip==13.8.0
 #python-dateutil==2.9.0.post0
 scipy  # seems to be python version dependent
-#six==1.16.0
+# six==1.16.0
 

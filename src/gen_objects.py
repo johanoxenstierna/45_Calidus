@@ -45,9 +45,9 @@ class GenObjects:
         if P.WRITE != 0:
             ax_b.axis([0, P.MAP_DIMS[0], 0, P.MAP_DIMS[1]])
         else:
-            # ax_b.axis([850, 1250, 500, 700])  # GSS
+            ax_b.axis([850, 1250, 500, 700])  # GSS
             # ax_b.axis([450, 1450, 300, 800])
-            ax_b.axis([0, P.MAP_DIMS[0], 0, P.MAP_DIMS[1]])
+            # ax_b.axis([0, P.MAP_DIMS[0], 0, P.MAP_DIMS[1]])
 
         ax_b.axis('off')  # TURN ON FOR FINAL
         ax_b.set_axis_off()
@@ -227,7 +227,7 @@ class GenObjects:
                 _destination_type = 'orbit'
 
             init_frames = _s.gen_init_frames(p0, p1, roc_gi, _destination_type)
-            # init_frames = [5, 25, 50, 100, 200, 500, 700]
+            init_frames = [5]  # , 25, 50, 100, 200, 500, 700]
 
             for init_frame in init_frames:
 

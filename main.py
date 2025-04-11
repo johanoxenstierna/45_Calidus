@@ -25,6 +25,7 @@ random.seed(3)  # ONLY HERE
 np.random.seed(3)  # ONLY HERE
 import time
 import pickle
+
 import matplotlib.animation as animation
 from src.gen_objects import GenObjects
 from src.load_pics import load_pics
@@ -42,6 +43,7 @@ if P.WRITE != 0:
     fig, ax_b = plt.subplots(figsize=(19.2, 10.8), dpi=100)
 ax_b = plt.gca()
 # fig, ax_b = plt.subplots()
+
 fig.subplots_adjust(bottom=0)
 fig.subplots_adjust(top=1)
 fig.subplots_adjust(right=1)

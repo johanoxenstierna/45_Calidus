@@ -8,7 +8,7 @@ def nauvis_gi_():  # 20
     gi = {}
     gi['r'] = 400
     gi['pi_offset'] = 0.38 * 2 * np.pi
-    gi['speed_gi'] = 4  # 4
+    gi['speed_gi'] = 1  # 4
     gi['tilt'] = 0.1 * np.pi  # 0.15     0.12 * 2 * np.pi  is 45 deg ARCTAN2 MINUS US UP
     gi['scale'] = 0.4  # 0.3
     gi['centroid_mult']= 8

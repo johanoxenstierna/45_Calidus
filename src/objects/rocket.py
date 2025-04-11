@@ -41,7 +41,7 @@ class Rocket(AbstractObject, AbstractSSS):
 
         if P.WRITE != 0:
             _s.alphas = norm.pdf(x=np.arange(0, len(_s.xy)), loc=len(_s.xy) / 2, scale=len(_s.xy) / 5)
-            y_range_min, y_range_max = 0.1, 0.4
+            y_range_min, y_range_max = 0.8, 0.9
             if P.WRITE != 0:
                 y_range_min, y_range_max = 0.1, 0.4
             _s.alphas = min_max_normalize_array(_s.alphas, y_range=[y_range_min, y_range_max])  # 0.2, 0.7
@@ -71,7 +71,7 @@ class Rocket(AbstractObject, AbstractSSS):
 
         # TODO: GEN
 
-        num_frames = 400 #int(200 / (_s.gi['speed_max'])
+        num_frames = 100 #int(200 / (_s.gi['speed_max'])
         if P.WRITE != 0:
             num_frames = 400
 
@@ -156,7 +156,6 @@ class Rocket(AbstractObject, AbstractSSS):
 
         xy = []
         vxy = []
-        zorders = []
 
         for i in range(1, num_frames):  # where will you be next frame? Then I will append myself to that.
 
@@ -192,7 +191,6 @@ class Rocket(AbstractObject, AbstractSSS):
 
             xy.append(np.copy(xy_i))
             vxy.append(np.copy(vxy_i))
-            zorders.append(9999)
 
             dist = np.linalg.norm(p1_xy[i] - xy_i)
             if dist < dist_cond_break:
@@ -214,6 +212,11 @@ class Rocket(AbstractObject, AbstractSSS):
             for i in range(1, len(vxy_scaled)):
                 xy_scaled.append(xy_scaled[-1] + vxy_scaled[i])
             xy = xy[0:len(xy) - NUM_CORR] + xy_scaled
+
+        # ZORDERS ====================================
+        zorders = np.full((len(xy),), fill_value=_s.zorders[-1])
+
+        # ============================================
 
         _s.xy = np.concatenate((_s.xy, np.asarray(xy, dtype=np.float32)))
         _s.alphas = np.concatenate((_s.alphas, np.full((len(xy),), fill_value=0.5)))
