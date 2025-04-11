@@ -1,0 +1,595 @@
+import numpy as np
+import copy
+import matplotlib.pyplot as plt
+
+import P
+from src.m_functions import min_max_normalization, min_max_normalize_array
+import random
+import scipy
+from scipy.stats import beta, gamma
+
+
+def gerstner_waves(o1, o0):
+	"""
+	Per particle!
+	3 waves:
+	0: The common ones
+	1: The big one
+	2: The small ones in opposite direction
+
+	OBS: xy IN HERE IS ACTUALLY xy_t
+	"""
+
+	# lam = 1.5  # np.pi / 2 - 0.07  # pi is divided by this, WAVELENGTH
+	# lam = 200  # np.pi / 2 - 0.07  # pi is divided by this, WAVELENGTH, VERY SENSITIVE
+
+	# c = 0.5
+	# c = -np.sqrt(9.8 / k)
+	# stn_particle = gi['steepness']  # need beta dists over zx mesh
+
+	# left_start = gi['o1_left_start']
+
+	frames_tot = o1.gi['frames_tot']
+
+	d = np.array([None, None])
+
+	xy = np.zeros((frames_tot, 2))  # this is for the final image, which is 2D!
+	dxy = np.zeros((frames_tot, 2))
+	rotation = np.zeros((frames_tot,))
+	scale = np.ones((frames_tot,))
+
+	xy0 = np.zeros((frames_tot, 2))
+	xy1 = np.zeros((frames_tot, 2))
+	xy2 = np.zeros((frames_tot, 2))
+	dxy0 = np.zeros((frames_tot, 2))
+	dxy1 = np.zeros((frames_tot, 2))
+	dxy2 = np.zeros((frames_tot, 2))
+	# peaks0 = np.zeros((frames_tot,))
+	# peaks1 = np.zeros((frames_tot,))
+	# peaks2 = np.zeros((frames_tot,))
+
+	'''MISTAKE HERE! 3D YT for each object was used. Obviously idiotic.
+	WHAT IS THIS USED FOR????????????????????????????????????????????'''
+	# YT = np.zeros((frames_tot, P.NUM_Z, P.NUM_X), dtype=np.float16)
+	YT = np.zeros((frames_tot,), dtype=np.float16)
+
+	x = o1.gi['ld'][0]
+	z = o1.gi['ld'][1]  # (formerly this was called y, but its just left_offset and y is the output done below)
+
+	SS = [1]
+	DIVISOR = 3
+	if P.COMPLEXITY == 1:
+		DIVISOR = 2
+
+	for w in SS:  # NUM WAVES
+
+		'''
+		When lam is high it means that k is low, 
+		When k is low it means stn is high. 
+		stn is the multiplier for y
+		
+		OBS ADDIND WAVES LEADS TO WAVE INTERFERENCE!!! 
+		Perhaps not? Increasing d will definitely increase k  
+		'''
+
+		if w == 0:  #
+			# d = np.array([0.2, -0.8])  # OBS this is multiplied with x and z, hence may lead to large y!
+			# d = np.array([0.3, -0.7])  # OBS this is multiplied with x and z, hence may lead to large y!
+			# d = np.array([0.8,  -0.2])  # OBS this is multiplied with x and z, hence may lead to large y!
+			d = np.array([0.1,  -0.9])  # OBS this is multiplied with x and z, hence may lead to large y!
+			c = 0.35  # [0.1, 0.02] prop to FPS EVEN MORE  from 0.2 at 20 FPS to. NEXT: Incr frames_tot for o2 AND o1
+			if P.COMPLEXITY == 1:
+				c /= 5
+			# d = np.array([0.2, -0.8])  # OBS this is multiplied with x and z, hence may lead to large y!
+			# d = np.array([0.9, -0.1])  # OBS this is multiplied with x and z, hence may lead to large y!
+			lam = 150  # DOES NOT AFFECT NUM FRAMES BETWEEN WAVES
+			# stn0 = stn_particle
+			k = 2 * np.pi / lam  # wavenumber
+		# stn_particle = 0.01
+
+		# steepness_abs = 1.0
+		elif w == 1:  # BIG ONE
+			# d = np.array([0.25, -0.75])
+			# d = np.array([0.4, -0.6])
+			# d = np.array([0.9, -0.1])
+			d = np.array([1, 0])
+			# c = 0.1  # [-0.03, -0.015] ?????
+			c = 0.1  # [0.1, 0.02]
+			if P.COMPLEXITY == 1:
+				c /= 5
+			lam = 700  # Basically, there are many waves, but only a few will be amplified a lot due to stns_t
+			k = 2 * np.pi / lam
+			# stn_particle = o0.gi.stns_zx1[o1.z_key, o1.x_key]
+			# stn_particle = o0.gi.stns_ZX[0, o1.z_key, o1.x_key]
+		# steepness_abs = 1
+		elif w == 2:
+			d = np.array([-0.2, -0.7])
+			# c = 0.1  # [0.06, 0.03]
+			c = 0.1  # [0.1, 0.02]
+			if P.COMPLEXITY == 1:
+				c /= 5
+			lam = 80
+			k = 2 * np.pi / lam  # wavenumber
+			# stn = stn_particle / k
+			stn = 1 / k
+		elif w == 3:
+			d = np.array([0.5, -0.5])
+			# c = 0.1  # [0.06, 0.03]
+			c = 0.15  # [0.1, 0.02]
+			if P.COMPLEXITY == 1:
+				c /= 5
+			lam = 700
+			k = 2 * np.pi / lam  # wavenumber
+			# stn = stn_particle / k
+			stn = 1 / k
+		else:
+			c = 0.1
+
+		i_range = np.arange(0, frames_tot)
+		Y = k * np.dot(d, np.array([x, z])) - c * i_range
+		stns_TZX_particle = o0.gi.stns_TZX[i_range, o1.z_key, o1.x_key]
+		stns = stns_TZX_particle / k
+
+		tilt_yshift_particle = o0.gi.TS[o1.x_key]
+
+		xy[i_range, 0] += (stns * np.cos(Y)) / DIVISOR
+		xy[i_range, 1] += (stns * np.sin(Y)) / DIVISOR + tilt_yshift_particle
+		YT[i_range] += (stns * np.sin(Y)) / DIVISOR
+
+		'''OBS CANNOT BE ONE VALUE (cuz later min-maxed)'''
+		dxy[i_range, 0] += 1 - stns * np.sin(Y)  # mirrored! Either x or y needs to be flipped
+		dxy[i_range, 1] += stns * np.cos(Y)
+		# dxy[i, 2] += (stn * np.cos(y)) / (1 - stn * np.sin(y))  # gradient: not very useful cuz it gets inf at extremes
+
+		if w in [0, 1, 3]:  # MIGHT NEED SHIFTING
+			# rotation[i] += dxy[i, 1]
+			rotation[i_range] = dxy[i_range, 1]
+		elif w in [2]:
+			rotation[i_range] = 0
+
+		scale[i_range] = - np.sin(Y)
+
+	dxy[:, 0] = -dxy[:, 0]
+	dxy[:, 1] = -dxy[:, 1]
+
+	'''ALPHA Used below by alpha'''
+	peaks = scipy.signal.find_peaks(xy[:, 1])[0]  # includes troughs
+	peaks_pos_y = []  # crest
+	for i in range(len(peaks)):  # could be replaced with lambda prob
+		pk_ind = peaks[i]
+		if pk_ind > 5 and xy[pk_ind, 1] > 0:  # check that peak y value is positive
+			peaks_pos_y.append(pk_ind)
+
+	'''ALPHA THROUGH TIME OBS ONLY FOR STATIC ======================================='''
+	ALPHA_LOW_BOUND = 0.5
+	ALPHA_UP_BOUND = 0.6
+	alphas = np.full(shape=(len(xy),), fill_value=ALPHA_LOW_BOUND)
+
+	for i in range(len(peaks_pos_y) - 1):
+		peak_ind0 = peaks_pos_y[i]
+		peak_ind1 = peaks_pos_y[i + 1]
+		# num = int((peak_ind1 - peak_ind0) / 2)
+		# start = peak_ind0 + int(0.5 * num)
+		num = int((peak_ind1 - peak_ind0))
+		start = peak_ind0
+		# alphas[pk_ind0:pk_ind1 + num]
+
+		# alphas_tp = np.sin(np.linspace(0, -0.5 * np.pi, num=int(peak_ind1 - peak_ind0)))
+
+		# alpha_mask_t = -beta.pdf(x=np.linspace(0, 1, num), a=2, b=2, loc=0)
+		alpha_mask_t = np.sin(np.linspace(0, np.pi, num=int(peak_ind1 - peak_ind0)))
+		alpha_mask_t = min_max_normalization(alpha_mask_t, y_range=[ALPHA_LOW_BOUND, ALPHA_UP_BOUND])  # [0.5, 1]
+		alphas[peak_ind0:peak_ind1] = alpha_mask_t
+
+	# if P.COMPLEXITY == 0:
+	# 	rotation = np.zeros(shape=(len(xy),))  # JUST FOR ROUND ONES
+	# elif P.COMPLEXITY == 1:
+	# 	'''T&R More neg values mean more counterclockwise'''
+	# 	# if len(SS) > 1:
+	# 	# 	if SS[0] == 2 and SS[1] == 3:  # ????
+	# 	# 		pass
+	# 	# 	else:
+	# 	# 		rotation = min_max_normalization(rotation, y_range=[-0.2 * np.pi, 0.2 * np.pi])
+	# 	# else:
+
+	rotation = np.zeros(shape=(len(xy),))
+	# rotation = min_max_normalization(rotation, y_range=[-1, 1])
+
+	# scale = min_max_normalization(scale, y_range=[1, 1.3])
+	scale = min_max_normalization(scale, y_range=[0.99, 1.1])
+
+	return xy, dxy, alphas, rotation, peaks, xy0, dxy0, xy1, dxy1, xy2, dxy2, scale #, YT
+
+
+def foam_f_ref(o1f, o1s):
+	"""
+
+	NEW: This whole function is deprecated. o1s is going to be removed completely.
+	Instead, all thats provided is starting coordinates and xy velocity vector from the
+	breaking o1_static.
+
+	New idea: Everything between start and start + num is available.
+	So use everything and then just move object to next peak by shift.
+	S H I F T   of static. Makes sense: If wave is crazy, foam is also crazy
+	"""
+
+	xy_t = np.copy(o1s.xy_t)
+	# xy_t0 = np.copy(o1s.xy_t0)
+
+	# MIN_DIST_FRAMES_BET_WAVES = 20
+
+	rotation0 = np.full((len(xy_t)), fill_value=-0.0001)  # CALCULATED HERE
+	alphas = np.full(shape=(len(xy_t),), fill_value=0.0)
+	scale = np.zeros(shape=(len(xy_t),))
+
+	# peaks = scipy.signal.find_peaks(xy_t[:, 1], distance=MIN_DIST_FRAMES_BET_WAVES, height=20)[0]  # OBS 20 needs tuning!!!
+	# neg_inds = np.where(o1s.peaks < 0)[0]  # this is probably needed for more complex wave interference.
+	# if len(neg_inds) > 0:  # THIS IS NEEDED DUE TO peaks -= 10
+	# 	peaks = o1s.peaks[neg_inds[-1] + 1:]  # dont use neg inds
+
+	xy_t[:o1s.peaks[0], :] = np.zeros(shape=(o1s.peaks[0], 2))
+
+	'''New: Just generate 1 motion 1 time.'''
+	for i in range(len(o1s.peaks) - 1):
+
+		peak_ind0 = o1s.peaks[i]
+		peak_ind1 = o1s.peaks[i + 1]
+
+		'''OBS THIS WRITES TO xy_t STRAIGHT'''
+		xy_tp = np.copy(xy_t[peak_ind0:peak_ind1])  # xy_tp: xy coords time between peaks
+		# xy_tp0 = np.copy(xy_t0[peak_ind0:peak_ind1])  # xy_tp: xy coords time between peaks
+		# h = o1s.o0.gi.TH[peak_ind0, o1s.z_key, o1s.x_key]
+
+		# rotation_tp = np.linspace(0, -1.5 * np.pi, num=int(peak_ind1 - peak_ind0))
+		# rotation_tp += np.random.uniform(-0.2, 0.4, size=1)
+		# rotation0[peak_ind0:peak_ind1] = rotation_tp
+
+		# scale_tp = np.linspace(0.2, 1.2, num=int(peak_ind1 - peak_ind0))
+		# scale[peak_ind0:peak_ind1] = scale_tp
+
+		h = 200  # positive value here
+		v = 100
+		theta = 0.01
+		G = 9.8
+
+		t_flight = (v * np.sin(theta) + np.sqrt((v * np.sin(theta)) ** 2 + 2 * G * h)) / G
+
+		t_lin = np.linspace(0, t_flight, len(xy_tp))
+		x = v * np.cos(theta) * t_lin  #
+		y = v * np.sin(theta) * 2 * t_lin - 0.5 * G * t_lin ** 2
+
+		xy_proj = np.zeros(shape=(len(xy_tp), 2))
+		xy_proj[:, 0] = x
+		xy_proj[:, 1] = y
+
+		aa = 5
+		'''
+		THETA
+		pi = bug, 2 pi = bug, 0.5 pi = straight up, 0.25 pi = 45 deg, 0.4 pi = more up, 0.1 pi = more horiz. 0.5-1 = neg x values
+		Flipping doesn't change any here. 
+		'''
+
+		# alpha_UB = 1
+		# alpha_mask_t = beta.pdf(x=np.linspace(0, 1, len(xy_tp)), a=2.5, b=10, loc=0)  # HAVE TO HAVE A PLACEHOLDER
+		# alpha_mask_t = min_max_normalize_array(alpha_mask_t, y_range=[0, alpha_UB])
+
+		'''
+		UPDATE: THIS EQ IS COMPLEX AND NOT WORKING. SHOULD BE EQUAL FOR ALL PARTICLES
+		Perhaps need a map of the zx -> y surface and then one can know exactly where a particle will launch up from
+		UPDATE2: H is now discrete!
+		'''
+
+		# if x_right_dist > 0:
+		# x_right_dist += random.randint(0, 100)  # -220, 120
+		# x_right_dist *= 1.5
+		# x_right_dist *= abs(np.random.normal(loc=2.5, scale=0.01))
+		# xy_proj[x_max_ind:, 0] += np.linspace(start=0, stop=x_right_dist, num=len(xy_proj[x_max_ind:, 1]))
+		# xy_proj[:, 0] += np.linspace(start=0, stop=x_right_dist, num=len(xy_proj[:, 0]))
+
+		# y_fall_dist += random.randint(300, 301)  # its flipped below
+		# y_fall_dist *= 1  # its flipped below
+		# y_fall_dist *= abs(np.random.normal(loc=0.7, scale=0.02))
+		'''y_up_dist is all the way. But maybe it shouldnt be pushed all the way down'''
+		# xy_proj[y_min_ind:, 1] = np.linspace(start=0, stop=-y_fall_dist, num=len(xy_proj[y_min_ind:, 1]))
+		# xy_proj[:, 1] = np.linspace(start=0, stop=-y_fall_dist, num=len(xy_proj[:, 1]))
+
+		# alpha_mask_t = beta.pdf(x=np.linspace(0, 1, len(xy_tp)), a=2, b=6, loc=0)  # HAVE TO HAVE A PLACEHOLDER
+		# alpha_mask_t = min_max_normalize_array(alpha_mask_t, y_range=[0.0, alpha_UB])
+
+		if o1f.o1_sib != None:  # This will be needed.
+			o1_sib = o1f.o1_sib
+			inds_under = np.where(xy_t[peak_ind0:peak_ind1, 1] < o1_sib.xy_t[peak_ind0:peak_ind1, 1])[0]
+			if len(inds_under) > 0:
+				xy_proj[inds_under[0]:, 1] = np.linspace(start=float(xy_proj[inds_under[0], 1]),
+														 stop=float(xy_proj[inds_under[0], 1]) + 500,
+														 num=len(xy_proj[inds_under[0]:, 1]))
+
+		# alpha_mask_t = min_max_normalization(alpha_mask_t, y_range=[0.0, alpha_UB])
+		# alpha_mask_t = min_max_normalize_array(alpha_mask_t, y_range=[0.0, alpha_UB])
+		# alphas[peak_ind0:peak_ind1] = alpha_mask_t
+		alphas[peak_ind0:peak_ind1] = 1
+
+		# xy_t[peak_ind0:peak_ind1, :] += xy_proj
+		xy_t[peak_ind0:peak_ind1, :] = xy_proj
+
+		adff = 5
+
+	return xy_t, alphas, rotation0, scale
+
+# def foam_f_old(o1f, o1s):
+# 	"""
+#
+# 	NEW: This whole function is deprecated. o1s is going to be removed completely.
+# 	Instead, all thats provided is starting coordinates and xy velocity vector from the
+# 	breaking o1_static.
+#
+# 	New idea: Everything between start and start + num is available.
+# 	So use everything and then just move object to next peak by shift.
+# 	S H I F T   of static. Makes sense: If wave is crazy, foam is also crazy
+# 	"""
+#
+# 	EARLINESS_SHIFT = 5
+# 	MIN_DIST_FRAMES_BET_WAVES = 15
+#
+# 	xy_t = np.copy(o1s.xy_t)
+# 	xy_t0 = np.copy(o1s.xy_t0)
+#
+# 	rotation0 = np.full((len(o1s.xy)), fill_value=-0.0001)  # CALCULATED HERE
+# 	alphas = np.full(shape=(len(xy_t),), fill_value=0.0)
+# 	scale = np.zeros(shape=(len(xy_t),))
+#
+# 	'''
+# 	Peaks found using xy_t
+# 	But v and h found using xy_t0
+# 	'''
+#
+# 	# peak_inds = scipy.signal.find_peaks(xy_t[:, 1], distance=MIN_DIST_FRAMES_BET_WAVES)[0]  # OBS 20 needs tuning!!!
+# 	peak_inds = scipy.signal.find_peaks(xy_t[:, 1], distance=MIN_DIST_FRAMES_BET_WAVES, height=20)[0]  # OBS 20 needs tuning!!!
+# 	peak_inds -= EARLINESS_SHIFT  # neg mean that they will start before the actual peak
+# 	neg_inds = np.where(peak_inds < 0)[0]
+# 	if len(neg_inds) > 0:  # THIS IS NEEDED DUE TO peak_inds -= 10
+# 		peak_inds = peak_inds[neg_inds[-1] + 1:]  # dont use neg inds
+#
+# 	'''
+# 	Need to increase v with x and z.
+# 	Wave breaks
+# 	Use o1 id
+#
+# 	NEW: Now that we have peaks, we can go back to using t instead of t0
+# 	Conjecture: Have to pick EITHER tp OR tp0 below.
+# 	'''
+#
+# 	# v_mult = o1.o0.gi.vmult_zx[o1.z_key, o1.x_key]
+# 	# h_mult = o1.o0.gi.stns_ZX[0, o1.z_key, o1.x_key]
+# 	# stn = o1.o0.gi.stns_ZX[0, o1.z_key, o1.x_key]
+#
+# 	# h = o1.o0.gi.TH[0, o1.z_key, o1.x_key]
+# 	# x_displ = 500
+#
+# 	for i in range(len(peak_inds) - 1):
+#
+# 		peak_ind0 = peak_inds[i]
+# 		peak_ind1 = peak_inds[i + 1]
+#
+# 		'''OBS THIS WRITES TO xy_t STRAIGHT'''
+# 		xy_tp = np.copy(xy_t[peak_ind0:peak_ind1])  # xy_tp: xy coords time between peaks
+# 		# xy_tp0 = np.copy(xy_t0[peak_ind0:peak_ind1])  # xy_tp: xy coords time between peaks
+# 		h = o1s.o0.gi.TH[peak_ind0, o1s.z_key, o1s.x_key]
+#
+# 		if len(xy_tp) < MIN_DIST_FRAMES_BET_WAVES:
+# 			raise Exception("W   T   F")
+#
+# 		rotation_tp = np.linspace(0, -1.5 * np.pi, num=int(peak_ind1 - peak_ind0))
+# 		rotation_tp += np.random.uniform(-0.2, 0.4, size=1)
+#
+# 		rotation0[peak_ind0:peak_ind1] = rotation_tp
+#
+# 		scale_tp = np.linspace(0.2, 1.2, num=int(peak_ind1 - peak_ind0))
+# 		scale[peak_ind0:peak_ind1] = scale_tp
+#
+# 		'''
+# 		Generating the break motion by scaling up the Gersner rotation
+# 		Might also need to shift it. Which is fine if alpha used correctly
+#
+# 		New thing: Instead of multiplying Gerstner circle with constant,
+# 		its much cleaner to extract v at top of wave and then generating a projectile motion.
+# 		BUT, this only works for downward motion
+# 		'''
+#
+# 		# y_max_ind = int(len(xy_tp0) * 0.1)
+# 		y_max_ind = EARLINESS_SHIFT
+# 		y_peak0 = xy_tp[y_max_ind, 1]
+# 		y_min_ind = np.argmin(xy_tp[:, 1])
+# 		y_min = xy_tp[y_min_ind, 1]
+# 		y_peak1 = xy_tp[-1, 1]
+# 		y_fall_dist = y_peak0 - y_min  # positive value here
+#
+# 		x_max_ind = np.argmax(xy_tp[:, 0])  # DOESNT WORK WITH MULTIPLE WAVES. TODO: USE PI INSTEAD
+# 		x_max = xy_tp[x_max_ind, 0]
+# 		x_min_ind = np.argmin(xy_tp[:, 0])
+# 		x_min = xy_tp[x_min_ind, 0]
+# 		x_peak_ind1 = xy_tp[-1, 0]
+# 		x_right_dist = x_max - x_min
+#
+#
+# 		'''
+# 		NUM HERE IS FOR PROJ. STARTS WHEN Y AT MAX
+# 		NUM SHOULD BE SPLIT INTO TWO PARTS (Maybe not)
+# 		NUM_P IS ONLY PROJ
+# 		NUM_B IS FOR RISING		'''
+#
+# 		num_p = len(xy_tp)
+#
+# 		# v_frame = abs(xy_t0[y_max_ind + 1, 0] - xy_t0[y_max_ind, 0])  # perhaps should be zero bcs xy_tp already includes all v that is needed?
+# 		# v_p = 1
+#
+# 		xy_proj = np.zeros(shape=(num_p, 2))
+# 		xy_proj[:, 0] = np.linspace(0, 1, num=num_p)  # DEFAULT VALUES COMPULSORY
+# 		xy_proj[:, 1] = np.linspace(0, 1, num=num_p)
+#
+# 		'''
+# 		THETA
+# 		pi = bug, 2 pi = bug, 0.5 pi = straight up, 0.25 pi = 45 deg, 0.4 pi = more up, 0.1 pi = more horiz. 0.5-1 = neg x values
+# 		Flipping doesn't change any here.
+# 		'''
+#
+# 		alpha_UB = 1
+#
+# 		alpha_mask_t = beta.pdf(x=np.linspace(0, 1, len(xy_tp)), a=2.5, b=10, loc=0)  # HAVE TO HAVE A PLACEHOLDER
+# 		alpha_mask_t = min_max_normalize_array(alpha_mask_t, y_range=[0, alpha_UB])
+#
+# 		# if h > 2.5:
+# 		# 	alpha_mask_t = beta.pdf(x=np.linspace(0, 1, len(xy_tp0)), a=2, b=2, loc=0)
+# 		# elif stn > 2:
+# 		# 	alpha_mask_t = beta.pdf(x=np.linspace(0, 1, len(xy_tp0)), a=2.5, b=3, loc=0)
+# 		# elif stn > 1.5:
+# 		# 	alpha_mask_t = beta.pdf(x=np.linspace(0, 1, len(xy_tp0)), a=2.5, b=6, loc=0)
+# 		# elif stn > 1:
+# 		# 	alpha_mask_t = beta.pdf(x=np.linspace(0, 1, len(xy_tp0)), a=2.5, b=10, loc=0)
+# 		# else:
+# 		# 	alpha_mask_t = beta.pdf(x=np.linspace(0, 1, len(xy_tp0)), a=2.5, b=10, loc=0)  # ONLY FIRST PART
+# 		# 	adf = 5
+#
+# 		'''
+# 		UPDATE: THIS EQ IS COMPLEX AND NOT WORKING. SHOULD BE EQUAL FOR ALL PARTICLES
+# 		Perhaps need a map of the zx -> y surface and then one can know exactly where a particle will launch up from
+# 		UPDATE2: H is now discrete!
+# 		'''
+#
+# 		# if h < 2 and h >= 0.001:  # build up
+# 		if h == 1:  # build up
+#
+# 			if y_min_ind - y_max_ind > 20 and x_min_ind - x_max_ind > 15 and \
+# 					y_fall_dist > 0 and x_right_dist > 0:  # y_min occurs after y_max and x_min occurs after x_max
+# 				x_right_dist *= 1.5
+# 				# xy_proj[x_max_ind:, 0] += np.linspace(start=0, stop=x_right_dist, num=len(xy_proj[x_max_ind:, 1]))
+# 				xy_proj[:, 0] += np.linspace(start=0, stop=x_right_dist, num=len(xy_proj[:, 0]))
+#
+# 				'''y should not go down'''
+# 				y_fall_dist *= 2
+# 				xy_proj[:, 1] += np.linspace(start=0, stop=y_fall_dist, num=len(xy_proj[:, 0]))
+#
+# 			alpha_mask_t = beta.pdf(x=np.linspace(0, 1, len(xy_tp)), a=3, b=8, loc=0)  # ONLY FIRST PART
+#
+# 			aa = 6
+# 		# if random.random() < 0.05:  # flying
+# 		# 	xy_proj[:, 0] = np.linspace(0, -150, num=num_p)
+# 		# 	xy_proj[:, 1] = np.linspace(0, 300, num=num_p)
+# 		# 	alpha_mask_t = beta.pdf(x=np.linspace(0, 1, len(xy_tp0)), a=2, b=10, loc=0)  # ONLY FIRST PART
+#
+# 		elif h == 2:  # breaking
+#
+# 			if y_min_ind - y_max_ind > 20 and x_min_ind - x_max_ind > 15 and \
+# 					y_fall_dist > 0 and x_right_dist > 0:  # y_min occurs after y_max and x_min occurs after x_max
+# 				'''TODO: the shifting needs to correspond to the gerstner wave'''
+#
+# 				# if x_right_dist > 0:
+# 				# x_right_dist += random.randint(0, 100)  # -220, 120
+# 				# x_right_dist *= 1.5
+# 				x_right_dist *= abs(np.random.normal(loc=2.5, scale=0.01))
+# 				# xy_proj[x_max_ind:, 0] += np.linspace(start=0, stop=x_right_dist, num=len(xy_proj[x_max_ind:, 1]))
+# 				xy_proj[:, 0] += np.linspace(start=0, stop=x_right_dist, num=len(xy_proj[:, 0]))
+#
+# 				# y_fall_dist += random.randint(300, 301)  # its flipped below
+# 				y_fall_dist *= 1  # its flipped below
+# 				y_fall_dist *= abs(np.random.normal(loc=0.7, scale=0.02))
+# 				'''y_up_dist is all the way. But maybe it shouldnt be pushed all the way down'''
+# 				# xy_proj[y_min_ind:, 1] = np.linspace(start=0, stop=-y_fall_dist, num=len(xy_proj[y_min_ind:, 1]))
+# 				xy_proj[:, 1] = np.linspace(start=0, stop=-y_fall_dist, num=len(xy_proj[:, 1]))
+#
+# 				alpha_mask_t = beta.pdf(x=np.linspace(0, 1, len(xy_tp)), a=2, b=6, loc=0)  # HAVE TO HAVE A PLACEHOLDER
+# 				alpha_mask_t = min_max_normalize_array(alpha_mask_t, y_range=[0.0, alpha_UB])
+#
+# 				if o1f.o1_sib != None:
+# 					o1_sib = o1f.o1_sib
+# 					inds_under = np.where(xy_t[peak_ind0:peak_ind1, 1] < o1_sib.xy_t[peak_ind0:peak_ind1, 1])[0]
+# 					if len(inds_under) > 0:
+# 						xy_proj[inds_under[0]:, 1] = np.linspace(start=float(xy_proj[inds_under[0], 1]),
+# 																 stop=float(xy_proj[inds_under[0], 1]) + 500,
+# 																 num=len(xy_proj[inds_under[0]:, 1]))
+#
+# 		elif h == 0:
+#
+# 			'''
+# 			ChaosTK:
+#
+# 			'''
+#
+# 			# if random.random() < 0.1:  # moves down
+# 			# 	x_stop = random.randint(90, 200)
+# 			# 	y_stop = random.randint(-20, -19)
+# 			# else:  # moves up
+# 			# 	x_stop = random.randint(90, 200)
+# 			# 	y_stop = random.randint(-20, 200)
+#
+# 			# x_stop = random.randint(50, 400)
+# 			x_stop = np.random.normal(loc=200, scale=5)
+#
+# 			# y_stop = random.randint(-100, 100)
+# 			y_stop = np.random.normal(loc=-20, scale=5)
+#
+# 			# y_stop = -100
+# 			#
+# 			xy_proj[:, 0] = np.linspace(0, x_stop, num=num_p)
+# 			xy_proj[:, 1] = np.linspace(0, y_stop, num=num_p)
+#
+# 			alpha_mask_t = beta.pdf(x=np.linspace(0, 1, len(xy_tp)), a=5, b=10, loc=0)
+# 			alpha_mask_t = beta.pdf(x=np.linspace(0, 1, len(xy_tp)), a=500, b=1000, loc=0)
+# 			aaa = 5
+# 		else:
+# 			raise Exception("h not 0, 1, 2")
+#
+# 		# alpha_mask_t = min_max_normalization(alpha_mask_t, y_range=[0.0, alpha_UB])
+# 		alpha_mask_t = min_max_normalize_array(alpha_mask_t, y_range=[0.0, alpha_UB])
+# 		alphas[peak_ind0:peak_ind1] = alpha_mask_t
+# 		# TODO: ADD TEST for nan
+#
+# 		'''OBBBBBBSSSS REMEMBER!!!! YOUR SHIFTING IT!!!! NOT SETTING'''
+#
+# 		if h in [1, 2]:
+# 			xy_t[peak_ind0:peak_ind1, :] += xy_proj
+# 		else:
+# 			xy_t[peak_ind0:peak_ind1, :] = xy_proj
+#
+# 			adff = 5
+#
+# 	if np.max(alphas) > 1.000:
+# 		asdf = 5
+#
+# 	return xy_t, alphas, rotation0, scale
+
+# def foam_b(o1, peak_inds):
+# 	"""
+#
+# 	"""
+#
+# 	xy_t = np.copy(o1.xy_t)
+# 	rotation = np.zeros((len(o1.xy),))
+# 	alphas = np.zeros(shape=(len(xy_t),))
+#
+# 	for i in range(len(peak_inds) - 1):
+# 		peak_ind0 = peak_inds[i]
+# 		peak_ind1 = peak_inds[i + 1]
+#
+# 		num = int((peak_ind1 - peak_ind0) / 2)  # num is HALF
+#adfasdf
+# 		start = int(peak_ind0 + 0.0 * num)
+#		hjlhjl
+# 		# mult_x = - beta.pdf(x=np.linspace(0, 1, num), a=2, b=5, loc=0)
+# 		# mult_x = min_max_normalization(mult_x, y_range=[0.2, 1])
+# 		# aa = mult_x
+# 		#
+# 		# mult_y = beta.pdf(x=np.linspace(0, 1, num), a=2, b=5, loc=0)
+# 		# mult_y = min_max_normalization(mult_y, y_range=[1, 1])
+# 		#
+# 		# xy_t[start:start + num, 0] *= mult_x
+# 		# xy_t[start:start + num, 1] *= mult_y
+#
+# 		alpha_mask = beta.pdf(x=np.linspace(0, 1, num), a=4, b=20, loc=0)
+# 		alpha_mask = min_max_normalization(alpha_mask, y_range=[0, 0.8])
+#
+# 		alphas[start:start + num] = alpha_mask
+#
+# 	return xy_t, alphas, rotation
+
+

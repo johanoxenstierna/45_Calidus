@@ -1,0 +1,14 @@
+
+matplotlib
+numpy
+#packaging==24.1
+#pillow==10.4.0
+#pyparsing==3.1.4
+PyQt6
+#PyQt6==6.7.1
+#PyQt6-Qt6==6.7.3
+#PyQt6_sip==13.8.0
+#python-dateutil==2.9.0.post0
+scipy  # seems to be python version dependent
+#six==1.16.0
+

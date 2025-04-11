@@ -1,0 +1,414 @@
+
+
+star wars death metal
+
+*landingOLDOLDOLD
+*The time it takes/num-actions-required to switch between a skeletal debugging version of the program VS the final upscaled render.
+*Copy-pasting AI code without understanding what it does is NOT scalable. You'll just end up with nasty problems later on.
+
+"""
+        I've decided to try another approach for the landing. I think the PID controller is too unstable and unnecessarily
+        complex and I suspect there is a much easier way to do it. This is brainstorming and I am looking
+        for feedback on my reasoning.
+        An overview of the rocket motion system: The rocket motion is divided into three functions:
+        1. takeoff. 2. mid_flight 3. landing
+        takeoff and mid_flight work well as far as I can see and all the troubles are with the landing.
+        I am not sure I remember correct but you might have written earlier that PID doesn't work that well when
+        the target object is following a complex movement pattern (please remind me if you did so). Even though
+        I am working in 2D xy without gravity etc, target objects that are
+        orbiting objects that are themselves orbiting other objects seem to be very difficult to reach smoothly using PID.
+
+        More details on takeoff and landing (I include some snippets of code with some simplifications). _s is
+        shorthand for self, _s.p0.xy is the origin body coordinates, _s.p1.xy is the target body coordinates,
+        init_frame is the animnation frame where the
+        rocket starts the takeoff, _s.xy are the rocket coordinates through time.
+
+        takeoff: I pre-generate an escape orbital motion for the rocket (xy_t), num_rot is number of orbits (I set it to 1 so far),
+        y_squeeze is used to give the animation a 3D feel. radius r is set as a linspace that grows to a desired radius
+        away from the origin. I then apply a tilt to xy_t such that the rocket moves toward p1 as it ends the takeoff.
+
+        y_squeeze = 0.08
+        xy_t = np.zeros((num_frames, 2))
+        xy_t[:, 0] = np.sin(np.linspace(0, num_rot * 2 * np.pi, num_frames)) * r
+        xy_t[:, 1] = -np.cos(np.linspace(0, num_rot * 2 * np.pi, num_frames)) * r * y_squeeze
+
+        # # Apply tilt by rotating the coordinates
+        direction_to_p1 = _s.p1.xy[_s.init_frame + num_frames - 1] - _s.p0.xy[_s.init_frame]  # p1 must be first
+        direction_to_p1 /= np.linalg.norm(direction_to_p1)  # Normalize 0-1
+        tilt = np.arctan2(direction_to_p1[1], direction_to_p1[0])
+
+        cos_theta = np.cos(tilt)
+        sin_theta = np.sin(tilt)
+        x_rot = cos_theta * xy_t[:, 0] - sin_theta * xy_t[:, 1]
+        y_rot = sin_theta * xy_t[:, 0] + cos_theta * xy_t[:, 1]
+
+        xy_t_rot = np.copy(xy_t)  # OBS: _s.xy_t no longer rotated!
+        xy_t_rot[:, 0] = x_rot
+        xy_t_rot[:, 1] = y_rot
+
+        _s.xy = _s.p0.xy[_s.init_frame:_s.init_frame + num_frames] + xy_t_rot
+
+        mid_flight: Here I use the PID controller much like we discussed previously. However, the for loop includes
+        a break that activates as soon as the rocket is at a certain distance away from the target. This leads to the
+        landing function.
+
+        So here is my idea for the new landing function: I think the takeoff function and the landing function can look
+        very similar. First, the same type of xy_t orbit is constructed but with the difference that r is decreasing
+        and I think (at least for now to keep things simple) that it makes sense that y_squeeze is close to zero.
+        Then, the xy_t orbit is tilted according to the direction to p1 (direction_to_p1) . Finally, the orbit is
+        shifted such that it follows the movement of p1. I suspect there will have to be some weighing involved at this
+        last step to make things look smooth.
+
+        One questionmark concerns the num_frames variable. I am not sure whether one can use it for the landing, and
+        since I want to have takeoff and landing as similar as possible, I want to have it for both or in neither of them.
+        For takeoff it makes sense to use it because the starting velocity is zero (from the rocket frame of reference),
+        but for the landing, the first velocity is not zero. Perhaps one can set it according to a max acceleration
+        parameter. The nice thing about it is that it allows the avoidance of any loop for the computation. But
+        on the other hand, we have a get_dummy_orbit function from earlier, i.e.:
+
+            def get_dummy_orbit(_s, p1_xy):
+                _s.r = max(0.1, _s.r * 0.99)
+                _s.theta += 0.05
+                x = p1_xy[0] + _s.r * np.cos(_s.theta)
+                y = p1_xy[1] + _s.r * np.sin(_s.theta) * 0.5
+                return np.array([x, y])
+
+        That function is clearly designed to be used inside a landing loop, where the radius and theta of the orbit
+        are changed each iteration according to constant rates. I think it would be preferable if one can get away with setting num_frames
+        beforehand and avoid a get_dummy_orbit type of function.
+
+        Am I missing something or could this new landing function be possible? The gist of the idea is to use the
+        coordinates of target p1 directly as a shift, instead of trying to match the velocity of a dummy orbit around it (too
+        complex and not robust).
+
+        """
+
+        The new landing function is definitely nice, primarily due to its simplicity even though it is displaying something complex, i.e. an orbit around the target p1. The mid_flight function just needs to get the rocket close enough to p1 for the landing to be triggered. However, I overlooked the problem that there will be a non-smooth transition if the rocket reaches p1 without first matching its velocity. So, to fix this, lets go back to mid_flight and the PID controller: As a reminder here is what it looks like:
+
+        class PIDController:
+        def __init__(self, kp, ki, kd):
+            """
+            Proportional (Kp): Controls the immediate response to position and velocity errors.
+            Integral (Ki): Helps eliminate steady-state errors by accounting for accumulated past errors.
+            Derivative (Kd): Damps the system by reacting to the rate of change of errors.
+            """
+            self.kp = kp
+            self.ki = ki
+            self.kd = kd
+            self.prev_error = 0
+            self.integral = 0
+
+        def update(self, error):
+
+            ''' Proportional term'''
+            proportional = self.kp * error
+
+            # Integral term
+            self.integral += error
+            integral = self.ki * self.integral
+
+            # Derivative term
+            derivative = self.kd * (error - self.prev_error)
+            self.prev_error = error
+            return proportional + integral + derivative
+
+        I initialize it like this:
+
+        kp = 0.99
+        ki = 0.01
+        kd = 0.05
+        pos_factor = 1
+        _s.pid_x = _s.PIDController(kp=pos_factor * kp, ki=pos_factor * ki, kd=pos_factor * kd)
+        _s.pid_y = _s.PIDController(kp=pos_factor * kp, ki=pos_factor * ki, kd=pos_factor * kd)
+        _s.pid_vx = _s.PIDController(kp=kp, ki=ki, kd=kd)
+        _s.pid_vy = _s.PIDController(kp=kp, ki=ki, kd=kd)
+
+        And call it like this each frame in the mid_flight loop:
+
+        error_x = p1_xy[i + num_forward, 0] - xy_i[0]
+        error_y = p1_xy[i + num_forward, 1] - xy_i[1]
+        error_vx = p1_vxy[i + num_forward, 0] - vxy_i[0]
+        error_vy = p1_vxy[i + num_forward, 1] - vxy_i[1]
+
+        _pid_x = _s.pid_x.update(error_x)
+        _pid_y = _s.pid_y.update(error_y)
+        _pid_vx = _s.pid_vx.update(error_vx)
+        _pid_vy = _s.pid_vy.update(error_vy)
+
+        vxy_new = np.array([_pid_x + _pid_vx, _pid_y + _pid_vy])  #
+
+        Note that I added two variables: First, at the initalization I added pos_factor which is intended to reduce the amount of positional x, y correction, because they are much larger than vx and vy corrections. Then, I added num_forward in the loop because I experimented with aiming for the target as a projection forward in time.
+
+        Even though the ideas behind these two variables seem ok, I am wondering if the PID controller/functionality couldn't be rewritten/improved as a whole. Here are my thoughts:
+
+        1. Clearly, the PID controller needs to be tuned because error_x and error_y are in the range ~[-1000, 1000]: The planets move on a 1920x1080 map. error_vx and error_vy, however, are in the range ~[-5, 5], because the planets and rockets maximum speed (speed_max) is set to be around 2-3 pixels/second (there is some tuning involved here that has to do with FPS but lets skip that for now). Due to the large positional PID corrections, the speed of vxy_new ware very large and I need to reduce it afterwards. I think it makes sense to move any speed normalization inside the PID controller.
+        2. As a potential refactor, I am wondering why there are four initializations of the PID controller (x, y, vx, vy), instead of two ((x, y), (vx, vy)): One for position and one for velocity. This may enable control of maximum position and velocity changes. Or perhaps even one: In the end, the four PID outputs are combined in a single velocity vxy_new, so maybe there is a cleaner way to do the whole thing.
+        3. With regard to weighing positional errors versus velocity ones, I am wondering whether it should be made such that the positional errors should be more important in the beginning and then diminish in favor of the velocity ones later on, when the rocket is closer to the target, but I am not sure (it may risk overcomplicating things again).
+
+        Please discuss the above three points and propose ways to improve the overall functionality. The weghing of positional errors versus velocity ones is the main thing. If you think it is best to keep the four initializations/uses of the PID controller please explain why.
+
+        ==========================================
+
+        I've successfully integrated your ideas. I've commented out the fade parts for now to reduce debugging complexity. There's still the issue with the positional errors being much larger than the velocity errors, so I did some more 0-1 clipping. It makes sense that the x, y components of vxy_new are in the range [0, 1] and then multiplied with a speed parameter. This is how it currently looks in the mid_flight loop (let me know if something looks weird):
+
+        error_pos = p1_xy[i] - xy_i
+        error_vel = p1_vxy[i] - vxy_i
+
+        # dist = np.linalg.norm(error_pos)
+        # fade = np.clip(dist / dist_diff_max, 0.0, 1.0)  # Fades from 1 (far) to 0 (close)
+
+        _pid_pos = _s.pid_pos.update(error_pos)
+        _pid_pos = np.clip(_pid_pos / dist_diff_max, 0.0, 1.0)
+        _pid_vel = _s.pid_vel.update(error_vel)
+        _pid_vel[0] = np.clip(_pid_vel[0] / vel_diff_max[0], 0.0, 1.0)
+        _pid_vel[1] = np.clip(_pid_vel[1] / vel_diff_max[1], 0.0, 1.0)
+
+        # vxy_new = fade * _pid_pos + (1 - fade) * _pid_vel  # SHOULD BE 0-1
+        vxy_new = 0.7 * _pid_pos + 0.3 * _pid_vel  # SHOULD BE 0-1
+
+        dist_diff_max and vel_diff_max are set before the loop as follows:
+
+        dist_diff_max = np.linalg.norm(p1_xy[0] - xy_i)
+        vel_diff_max = np.array([_s.p1.speed_max * 3, _s.p1.speed_max * 3])  # MIGHT NEED SEPARATE X Y HERE
+
+     Hence, dist_diff_max is the distance between the rocket after it finished the takeoff function and vel_diff_max is provided by p1's speed_max, which in its turn is computed beforehand as _s.speed_max = max(np.linalg.norm(_s.vxy, axis=1)) (so the target object class has a vxy lasting the whole duration of the animation and p1_vxy is extracted from a certain starting frame, i.e. the frame when the rocket takes off for the takeoff function and then the frame that it exits the takeoff for the mid_flight function). I use separate x and y components in vel_diff_max since I might want to squeeze the y axis later for 3D feel (the target planets/moons move with squeezed y).
+
+        Let's now discuss how to set the speed (thrust) of the rocket. Since the takeoff is handled in a separate function, the rocket has some speed at the beginning of mid_flight and it's faded away in a way that I'm happy with so no need to discuss that here. Also of relevance is that the mid_flight function breaks when the rocket is "close enough" to p1 (dist_cond1) for the orbital landing function to start. At that point, the difference in speed between the rocket and p1 should be some pre-set value (say 1 px/frame) so that the orbital landing function can be as simple as possible with no loop.
+
+        Initially I thought I could pre-generate the speed using a linspace like:
+
+        speed_dist = np.linspace(1, _s.p1.speed_max * 3, num=dist_cond0)
+
+        So the further distance the rocket from p1, the more speed. Maybe there is a clean way to do it, but I'm suspecting the speed cannot be pre-generated at all like this because the lower bound needs to be the difference in speed at a specific frame and not a constant. This shouldn't be that hard to fix inside the loop but I begin by asking you what you think of the general approach and how you would go ahead and do it given all the info so far.
+
+        ============================
+
+        Looks good, just some small things for now:
+
+        fade renamed to dist01 and speed_diff_target to speed_corr
+
+        speed cannot just depend on p1, but must also use an own rocket parameter (perhaps mainly for debugging when one might want to set p1's speed to zero).
+
+        In the following code, how do I ensure that speed_p1 and speed_new have a distance of 1 at the last iteration?
+
+        speed_new = np.linalg.norm(vxy_new)  # Compute the speed (magnitude of velocity vector)
+        speed_p1 = np.linalg.norm(p1_vxy[i])
+        speed_corr = speed_p1 - speed_new  # WANT IT TO BE 1 or -1 AT THE LAST ITERATION
+
+        speed = dist01 * (_s.p1.speed_max * 3.2) + (1 - dist01) * speed_corr
+        vxy_new = vxy_new / np.linalg.norm(vxy_new + 1e-6) * speed
+
+
+        =================
+
+        Ok, after the integration of these changes I see that the rocket starts jumping back and forward starting a certain distance away from p1. vxy_new starts to flip sign each iteration. How do I fix this? Below is the relevant part of the mid_flight loop:
+
+        for i in range(1, num_frames):  # where will you be next frame? Then I will append myself to that.
+
+            error_pos = p1_xy[i] - xy_i
+            error_vel = p1_vxy[i] - vxy_i
+
+            _pid_pos = _s.pid_pos.update(error_pos)
+            _pid_vel = _s.pid_vel.update(error_vel)
+
+            norm_pos = max(np.linalg.norm(_pid_pos), 0.000001)
+            norm_vel = max(np.linalg.norm(_pid_vel), 0.000001)
+
+            _pid_pos01 = _pid_pos / norm_pos * min(norm_pos / dist_diff_max, 1.0)  # second one should almost always be < 1, so  just in case
+            _pid_vel01 = _pid_vel / norm_vel * min(norm_vel / np.linalg.norm(vel_diff_max), 1.0)
+
+            dist01 = max(np.linalg.norm(error_pos), 0.000001)
+            dist01 = np.clip(dist01 / dist_diff_max, 0.0, 1.0)  # Fades from 1 (far) to 0 (close)
+
+            vxy_new = dist01 * _pid_pos01 + (1 - dist01) * _pid_vel01  # SHOULD BE 0-1
+            # vxy_new = 0.7 * _pid_pos + 0.3 * _pid_vel  # SHOULD BE 0-1
+
+            # Set a desired velocity difference at end of mid_flight
+            speed_corr = 1.0  # Can be positive or negative depending on whether rocket should be faster/slower
+            speed_far = _s.p1.speed_max * 3.2
+            speed_p1 = np.linalg.norm(_s.p1.vxy[i])
+            speed_near = speed_p1 + speed_corr  # Ensures desired difference
+            speed = dist01 * speed_far + (1 - dist01) * speed_near
+            vxy_new = vxy_new / (np.linalg.norm(vxy_new) + 1e-6) * speed
+
+    ===========
+
+    it's definitely getting close now. mid_flight mainly needs smaller changes and tuning. I share the full function:
+
+    def mid_flight(_s):
+
+        kp = 0.99
+        ki = 0.00
+        kd = 0.05
+        _s.pid_pos = _s.PIDController(kp=kp, ki=ki, kd=kd)
+        _s.pid_vel = _s.PIDController(kp=kp, ki=ki, kd=kd)
+
+        xy_i = np.copy(_s.xy[-1, :])
+        vxy_i = np.array([_s.xy[-1, 0] - _s.xy[-2, 0], _s.xy[-1, 1] - _s.xy[-2, 1]])  # dictates max speed currently
+
+        num_frames = int(0.8 * _s.gi['frames_max'])  # _s.gi here is a dict with rocket information
+
+        '''OBS len(xy) - 1 GIVES LAST xy ADDED i.e. CURRENT, BUT LOOP BELOW SHOULD USE NEXT VALUES ie range(1, num)
+        BCS OTHERWISE AFTER xy.append() the latest xy will be one step ahead of p1,
+        and that prevents clean way to retrieve values after loop
+        '''
+
+        p1_xy = _s.p1.xy[_s.init_frame + len(_s.xy) - 1:_s.init_frame + len(_s.xy) - 1 + num_frames]
+        p1_vxy = _s.p1.vxy[_s.init_frame + len(_s.xy) - 1:_s.init_frame + len(_s.xy) - 1 + num_frames]
+        dist_diff_max = 200  # np.linalg.norm(p1_xy[0] - xy_i)
+        vel_diff_max = np.array([_s.p1.speed_max * 3, _s.p1.speed_max * 3])  # MIGHT NEED SEPARATE X Y HERE
+        speed_diff_at_end = 1.0
+        speed_far = _s.p1.speed_max * 1.2
+        speed_smoothing = 0.1  # this amount is vxy_new and 1-this is vxy_i
+
+        dist_cond_break = 3
+
+        xy = []
+        zorders = []
+
+        for i in range(1, num_frames):  # where will you be next frame? Then I will append myself to that.
+
+            if i == 52:
+                adfg = 5
+
+            error_pos = p1_xy[i] - xy_i
+            error_vel = p1_vxy[i] - vxy_i
+
+            _pid_pos = _s.pid_pos.update(error_pos)
+            _pid_vel = _s.pid_vel.update(error_vel)
+
+            norm_pos = np.linalg.norm(_pid_pos) + 1e-6
+            norm_vel = np.linalg.norm(_pid_vel) + 1e-6
+
+            _pid_pos01 = _pid_pos / norm_pos * min(norm_pos / dist_diff_max, 1.0)
+            _pid_vel01 = _pid_vel / norm_vel * min(norm_vel / np.linalg.norm(vel_diff_max), 1.0)
+
+            dist01 = np.linalg.norm(error_pos) + 1e-6
+            dist01 = np.clip(dist01 / dist_diff_max, 0.0, 1.0)  # Fades from 1 (far) to 0 (close)
+            dist01 = max(dist01, 0.5)  # always use at least 50% position
+
+            vxy_new = dist01 * _pid_pos01 + (1 - dist01) * _pid_vel01  # SHOULD BE 0-1
+
+            speed_p1 = np.linalg.norm(_s.p1.vxy[i])
+            speed_near = speed_p1 + speed_diff_at_end
+            speed = dist01 * speed_far + (1 - dist01) * speed_near
+            vxy_new = vxy_new / (np.linalg.norm(vxy_new) + 1e-6) * speed
+
+            vxy_i = vxy_i * (1 - speed_smoothing) + vxy_new * speed_smoothing
+
+            xy_i += vxy_i
+            xy.append(np.copy(xy_i))
+            zorders.append(9999)
+
+            dist = np.linalg.norm(p1_xy[i] - xy_i)
+            if dist < dist_cond_break:
+                break
+
+        _s.xy = np.concatenate((_s.xy, np.asarray(xy)))
+
+        Notes:
+        1. From my tests, ki does causes instabilities so I set it to zero. I use dist01 = max(dist01, 0.5) because without it, the rocket would stop moving towards p1 starting some distance away from p1. Perhaps this could have been fixed using a better function that the current clipping, but it's simple and it works ok.
+        2. Also note that I set dist_diff_max to a rather low constant (200 pixels) rather than np.linalg.norm(p1_xy[0] - xy_i). I find this necessary to avoid the previously discussed conflict between PID positional and velocity corrections. As some context, a rocket may go from Jupiter (p0) to a space station orbiting around earth (p1), and during mid_flight the space station carries out many orbits and that leeds to big fluctuations in rocket PID velocity changes. The simplest robust way of dealing with this is to only use PID velocity corrections when the rocket passes a hard distance threshold.
+        3. One side-effect of 2 is that rocket motions look too straight for much of their trips, instead of following the same elliptical shape of the planets/moons etc p1's. When generating the p1's orbit motions, I simply squeeze the y-axis values. I think its a later polishing issue, or do you think there is a way to make the rocket motions look more 'elliptical' in the code I shared here without causing complexity troubles?
+        4. One current problem is that the speed of the rocket isn't 1 px/frame faster than p1 as the for loop completes. Currently I use speed_smoothing=0.1 and given my set up increasing it leads to the aforementioned flips in vxy. My initial thought is that one can set speed_smoothing dynamically based on dist01, but I am not sure and I want to keep things as simple as possible. Shouldn't there be a simple way to force the rocket to end mid_flight with the 1px-faster-than-p1 requirement?
+
+        Discuss the points above (mainly 4) and also let me know if there is anything suspicious-looking in the mid-flight function.
+
+       ================
+
+       mid_flight is good enough for now. I did find another bug in it. It should be speed_p1 = np.linalg.norm(p1_vxy[i]) and not speed_p1 = np.linalg.norm(_s.p1_vxy[i]). So the sampled p1 speeds in the loop were always wrong. The reason I get p1_xy and p1_vxy at the top of the function is so that I don't have to use the complicated indexing in the loop. _s.p1_vxy contains ALL the velocities of the target object, i.e., they have velocities for all the frames in the animation. The rocket, meanwhile, starts at a pre-designated init_frame, and index _s.init_frame + len(_s.xy) gives the frame after the init frame and the xy values generated by all previous rocket motion functions.
+
+        Let's move on to the landing function. Here's what it looks like currently:
+
+        def landing(_s):
+
+            """
+            num_frames_t: The number of frames that the function lasts. Currently it's just a constant but eventually it may be set dynamically.
+
+            4 components with shape (num_frames_t, 2)
+            xy_t_rot: Orbital motion that is as similar as possible to the takeoff function. It is centered on 0 currently so can't be shown in isolation. The three other components can all be used in isolation to enable debugging. Note y_squeeze = 0.00001 is necessary here to ensure the orbit starts at an origin.
+            xy_v0: The inital coordinate (xy_i) is used to generate an array xy_v0, which is moved using entry velocity vxy_i (which is also reduced by some number of frames NUM_0 <= num_frames_t)
+            p1_shifted: p1's position shifted by -dist_xy. dist_xy is the distance between the rocket and p1 at the beginning of this function.
+            p1_actuall: p1's position (the target coordinate).
+            """
+
+            # CURRENT FRAME =========================================
+            xy_i = np.copy(_s.xy[-1, :])
+            vxy_i = np.array([_s.xy[-1, 0] - _s.xy[-2, 0], _s.xy[-1, 1] - _s.xy[-2, 1]])
+            p1_vxy_i = _s.p1.vxy[_s.init_frame + len(_s.xy) - 1]
+            speed_diff_debug = np.linalg.norm(p1_vxy_i) - np.linalg.norm(vxy_i)
+
+            # NEXT FRAME (This is where this function starts working) =========================================
+            xy_i += vxy_i  # can now be used as first value
+            xy_v0 = [xy_i]
+            dist_xy = _s.p1.xy[_s.init_frame + len(_s.xy)] - xy_i
+
+            num_frames_t = int(400)
+            num_rot = 1
+
+            y_squeeze = 0.00001
+
+            r = np.linspace(25, 0, num_frames_t)
+
+            xy_t = np.zeros((num_frames_t, 2))
+            xy_t[:, 0] = np.sin(np.linspace(0, num_rot * 2 * np.pi, num_frames_t)) * r
+            xy_t[:, 1] = -np.cos(np.linspace(0, num_rot * 2 * np.pi, num_frames_t)) * r * y_squeeze
+
+            # Apply tilt by rotating the coordinates
+            tilt = np.arctan2(vxy_i[1], vxy_i[0])
+
+            cos_theta = np.cos(tilt)
+            sin_theta = np.sin(tilt)
+            x_rot = cos_theta * xy_t[:, 0] - sin_theta * xy_t[:, 1]
+            y_rot = sin_theta * xy_t[:, 0] + cos_theta * xy_t[:, 1]
+
+            xy_t_rot = np.copy(xy_t)
+            xy_t_rot[:, 0] = x_rot
+            xy_t_rot[:, 1] = y_rot
+
+            NUM_0 = 200
+            use_v0 = np.zeros((num_frames_t,))
+            use_v0[0:NUM_0] = np.linspace(1, 0, NUM_0)
+            for i in range(1, len(use_v0)):
+                xy_v0.append(xy_v0[-1] + vxy_i * use_v0[i])
+            use_v0 = np.stack((use_v0, use_v0), axis=1)
+
+            p1_shifted = -dist_xy + _s.p1.xy[_s.init_frame + len(_s.xy):_s.init_frame + len(_s.xy) + num_frames_t]
+            p1_actuall = _s.p1.xy[_s.init_frame + len(_s.xy):_s.init_frame + len(_s.xy) + num_frames_t]
+
+            use_p1_shifted = np.full((num_frames_t,), fill_value=1.)
+            use_p1_shifted[0:NUM_0] = np.linspace(0, 1, NUM_0)
+            use_p1_shifted = np.stack((use_p1_shifted, use_p1_shifted), axis=1)
+
+            # ============================
+
+            use_v0_and_shifted = np.linspace(1, 0, num=num_frames_t)
+            use_v0_and_shifted = np.stack((use_v0_and_shifted, use_v0_and_shifted), axis=1)
+            use_p1_actuall = np.linspace(0, 1, num=num_frames_t)
+            use_p1_actuall = np.stack((use_p1_actuall, use_p1_actuall), axis=1)
+
+            # xy = xy_t_rot + use_v0 * xy_v0 + use_shifted * shifted
+            xy = xy_t_rot + use_v0_and_shifted * (use_v0 * xy_v0 + use_p1_shifted * p1_shifted) + use_p1_actuall * p1_actuall
+
+            zorders = np.full((len(xy),), dtype=int, fill_value=9999)
+            _s.xy = np.concatenate((_s.xy, np.asarray(xy)))
+
+       I am happy with the general principle of what it's doing and particularly the intention to keep it simple without the same kind of big loop as in mid_flight. mid_flight is set to break when the distance to p1 is 15 px, so landing is just supposed to be smooth and simple and generally, it seems to work as expected. But it needs more work to make the motion smoother. The main output of the function is same as before: a list xy that is converted to the pre-existing xy array using _s.xy = np.concatenate((_s.xy, np.asarray(xy))) (there's also alphas and zorders but let's keep them out in this discussion).
+
+       There are four parts (I call them components) that make up the landing function and that are blended at the end. See the docstring at the beginning of the function for details on what each of them does.
+
+        Discussion points:
+        1. As you can see, I use a rather complex weighting procedure using linspaces:
+
+         xy = xy_t_rot + use_v0_and_shifted * (use_v0 * xy_v0 + use_p1_shifted * p1_shifted) + use_p1_actuall * p1_actuall
+
+         So xy_t_rot does not get weighted at all, xy_v0 and p1_shifted first get weighted together using NUM_0 (xy_v0 goes from 1-0 in NUM_0 frames, p1_shifted goes from 0-1 in NUM_0 frames), and they both then get weighted against p1_actuall using a slower weighting scheme. Using this procedure, I found it difficult to find a satisfactory value for NUM_0. If NUM_0=num_frames_t, xy_v0 sometimes becomes too dominant and the rocket can go too far away from p1 (note that the implementation we discussed last time with the rocket speed being exactly some constant amount faster than p1 at the end of mid_flight, also requires tuning that is ok'ish at this stage but not perfect). If I set NUM_0 < num_frames_t (e.g. 200 like now), there is an obvious non-smooth "glitch" at the NUM_0 point in time.
+
+         2. I thought xy_t_rot would help remove the glitch, but it isn't cooperating so I set its radius r = np.linspace(1, 0, num_frames_t), which removes this component. The problem as I understand it is that there isn't any mechanism to ensure that xy_t_rot is moving in a direction that blends well with the rocket motion at the NUM_0 stage. If NUM_0=num_frames_t and r = np.linspace(25, 0, num_frames_t) (it should start at some value and then go down to zero) it looks ok.
+
+         3. So in conclusion, it feels like the entry velocity component is the root of the troubles. It makes sense, because the last effort in mid_flight was all about ensuring that entry speed is as close as possible to some constant. Now I am wondering if it makes more sense to go back to mid_flight and keep working there or if there is some fix/refactor that you see here in the landing function that could make it work better. For example, replacing the linspace weighting scheme with decay rates or adding/removing/blending components in a different way.
+
+
+         ==============
+
+         xy_t_rot
