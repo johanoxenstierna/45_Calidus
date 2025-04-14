@@ -22,6 +22,6 @@ class O0C(AbstractObject):
         _s.xy[:, 1] = 540.
 
         _s.xy_t = np.full((P.FRAMES_TOT_BODIES, 2), fill_value=0).astype(np.float32)
-        _s.zorders = np.full((P.FRAMES_TOT_BODIES,), fill_value=1000).astype(int)  # these are multiplied with r later
+        _s.zorders = np.full((P.FRAMES_TOT_BODIES,), fill_value=2000).astype(int)  # these are multiplied with r later
         _s.gi['r'] = 0
 

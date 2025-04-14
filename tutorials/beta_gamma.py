@@ -5,9 +5,9 @@ import scipy
 from src.m_functions import min_max_normalize_array
 
 
-NUM = 200
-pdf = beta.pdf(x=np.arange(0, NUM), loc=10, a=5, b=10, scale=NUM)
-pdf = min_max_normalize_array(pdf, y_range=[0, 20])
+NUM = 60
+pdf = -beta.pdf(x=np.arange(0, NUM), a=2, b=2, loc=0, scale=NUM)
+# pdf = min_max_normalize_array(pdf, y_range=[0, 20])
 
 ax0 = plt.plot(pdf, marker='o')
 # ax0 = plt.plot(shift_post_peak_pdf, marker='o')

@@ -475,3 +475,25 @@ star wars death metal
       3. The objects are not changed in terms of scale, rotation or alpha. Please modify the code such that they do.
       4. Could you make the objects orbit around the centre of the canvas instead of the random translations? E.g. using np.sin(np.linspace... and -np.cos(np.linspace...)
       5. Is there GPU support? No need to add it in the code right now, but what would be the commands to enable GPU usage?
+
+      =============
+
+      It's very close now.
+      It was indeed the linspaces that was causing the previous core issue. I usually start scripting with linspaces because they are the as simple-as-possible way and then replace them with better functions later on. I also ended up not using xy_t_rot at all: The point of the function was ornamental as you wrote, and as it turns out, the position and velocity matching of a rocket to a planet/moon is so complex as is so that xy_t_rot isn't strictly necessary, while it, meanwhile, can aggravate the biggest current issue: That rocket sometimes appear to fly too fast. The maximum speed of the rocket in mid_flight is given by
+
+      speed_far = _s.p1.speed_max * 1.1
+
+      p1's speed_max is calculated as follows (_s here is a p1 object):
+
+      _s.vxy[:, 0] += _s.parent.vxy[:, 0]
+      _s.vxy[:, 1] += _s.parent.vxy[:, 1]
+      _s.speed_max = max(np.linalg.norm(_s.vxy, axis=1))
+
+      vxy is the velocity in pixels/frame and _s.parent can either be a stationary sun or a moving planet (if p1 is a moon or orbiting space station). Basically, the velocity of a p1 when it is a moon is much faster than the parent planet and this results in that speed_far = _s.p1.speed_max * 1.1 can be too large when p1 is a moon.
+
+      Do you have any suggestions on how to fix this problem? One idea would be to add another speed_max parameter for the p1 objects: One that only uses the parent vxy's, and one that does the same thing as before (parent + _s). Then, the rockets are only allowed to use the faster speed_max when it is getting close to p1 OR when the distance to p1 is increasing.
+
+      Related to this is your proposal two messages ago about replacing distance with a Progress Ratio, but I am currently quite against that due to the just above mentioned scenario that the distance to p1 may increase. Distance is simple.
+
+
+

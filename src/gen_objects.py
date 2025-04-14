@@ -251,7 +251,7 @@ class GenObjects:
                 _destination_type = 'orbit'
 
             init_frames = _s.gen_init_frames(p0, p1, roc_gi, _destination_type)
-            # init_frames = [5]  # , 25, 50, 100, 200, 500, 700]
+            # init_frames = [5, 25, 50, 100, 200, 500, 700]
 
             for init_frame in init_frames:
 
@@ -298,6 +298,13 @@ class GenObjects:
         init_frames = np.sort(np.random.choice(ddd_inds_sorted, size=num_to_select, replace=False, p=pdf_dist))
         init_frames = init_frames[np.where(init_frames > 5)]
         init_frames = init_frames[np.where(init_frames + 2000 + roc_gi['frames_max'] < P.FRAMES_TOT_BODIES)]
+
+        # min_distance_integers =
+        # filtered = [arr[0]]  # Always keep the first element
+        # for num in arr[1:]:
+        #     if num - filtered[-1] >= 100:
+        #         filtered.append(num)
+
         init_frames = list(init_frames)
         return init_frames
 

@@ -82,6 +82,7 @@ def _sigmoid(x, grad_magn_inv=None, x_shift=None, y_magn=None, y_shift=None):
 
 
 def sigmoid_blend(x, sharpness=5):
+	"""The more sharpness, the crazier shift in speed possible"""
 	return 1 / (1 + np.exp(-sharpness * (x - 0.5)))
 
 

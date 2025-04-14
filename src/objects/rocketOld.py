@@ -19,7 +19,7 @@ class Rocket(AbstractObject, AbstractSSS):
         _s.init_frame = init_frame
         _s.id = str(init_frame)
         _s.gi = gi
-        _s.zorder = 1000
+        _s.zorder = 2000
         _s.type = 'rocket'
         _s.p0 = p0
         _s.p1 = p1

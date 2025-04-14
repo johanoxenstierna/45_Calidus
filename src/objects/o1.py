@@ -37,7 +37,8 @@ class O1C(AbstractObject, AbstractSSS):
         _s.xy = None
         _s.xy_t = None
         _s.vxy = None
-        _s.speed_max = None
+        _s.speed_max0 = None
+        _s.speed_max1 = None
         _s.zorders = None
         _s.alphas = None
         _s.scale = None
@@ -98,30 +99,25 @@ class O1C(AbstractObject, AbstractSSS):
         _s.zorders *= _s.gi['r']
         _s.zorders += _s.parent.zorders
 
-        '''OBS has to be done AFTER zorders'''
+        '''OBS has to be done AFTER zorders (??? PEND DEL)'''
         _s.vxy[:, 0] += _s.parent.vxy[:, 0]
         _s.vxy[:, 1] += _s.parent.vxy[:, 1]
-        _s.speed_max = max(np.linalg.norm(_s.vxy, axis=1))
+        _s.speed_max1 = max(np.linalg.norm(_s.vxy, axis=1))
 
-        aa = 5
-
-        # ONLY DL NOW
-        # _s.alphas = np.copy(_s.xy[:, 1])
-        # _s.alphas = min_max_normalize_array(_s.alphas, y_range=[0.99, 1])  # will prob be removed in favor of DL
-
-        if _s.parent.id == '0':  # this means the object is rotating around Calidus and not one of its planets (i.e. its not a moon)
+        if _s.parent.id == '0':  # NON GSS/moon
+            _s.speed_max0 = _s.speed_max1
             _s.rotation = np.linspace(0 + _s.gi['pi_offset'], num_rot * 2 * np.pi + _s.gi['pi_offset'], P.FRAMES_TOT_BODIES)
             # _s.rotation = np.full((P.FRAMES_TOT_BODIES,), fill_value=0)
             _s.scale = np.copy(_s.xy_t[:, 1])
             _s.scale = min_max_normalize_array(_s.scale, y_range=[0.7 * _s.gi['scale'], _s.gi['scale']])
         else:
+            _s.speed_max0 = max(np.linalg.norm(_s.parent.vxy, axis=1))  # only use parent to avoid fast orbitals
             _s.rotation = _s.parent.rotation
-            _s.scale = np.full((P.FRAMES_TOT_BODIES,), fill_value=_s.gi['scale'])  # GSS
+            _s.scale = np.full((P.FRAMES_TOT_BODIES,), fill_value=_s.gi['scale'])  # GSS, Moon
 
         _s.centroids *= _s.scale
-        # _s.centroids[:, 1] *= _s.scale
 
-        # if _s.id == 'GSS':
+        # if _s.id == 'GSS': PEND DEL?
         #     _s.scale = np.full((P.FRAMES_TOT_BODIES,), fill_value=0.5)
         #     _s.centroids[:, 0] *= _s.scale
         #     _s.centroids[:, 1] *= _s.scale

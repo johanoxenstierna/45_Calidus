@@ -36,11 +36,13 @@ import P as P
 Writer = animation.writers['ffmpeg']
 writer = Writer(fps=P.FPS, bitrate=3600)  #, extra_args=['-vcodec', 'h264_nvenc'])
 
-# fig = plt.figure(figsize=(16, 9), dpi=1920/16)
-fig = plt.figure(figsize=(12.8, 7.2))
-# fig = plt.figure(figsize=(10, 6))
 if P.WRITE != 0:
     fig, ax_b = plt.subplots(figsize=(19.2, 10.8), dpi=100)
+else:
+    fig, ax_b = plt.subplots(figsize=(19.2, 10.8), dpi=100)
+    # fig = plt.figure(figsize=(16, 9), dpi=1920/16)
+    # fig = plt.figure(figsize=(12.8, 7.2))
+    # fig = plt.figure(figsize=(10, 6))
 
 ax_b = plt.gca()
 # fig, ax_b = plt.subplots()

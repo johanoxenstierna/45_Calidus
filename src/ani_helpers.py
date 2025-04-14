@@ -53,11 +53,7 @@ def set_data_O1(o, ax_b):
 						translate(o.xy[o.clock][0], o.xy[o.clock][1]). \
 						translate(-o.centroids[o.clock], -o.centroids[o.clock]) + ax_b.transData
 				ax0.set_transform(M)
-				# ax0.set_alpha(0.1)
-				try:
-					ax0.set_alpha(o.alphas_DL[i][o.clock])
-				except:
-					adf = 5
+				ax0.set_alpha(o.alphas_DL[i][o.clock])
 				ax0.set_zorder(int(o.zorders_DL[i][o.clock]))
 
 		else:

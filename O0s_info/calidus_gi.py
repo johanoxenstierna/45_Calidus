@@ -16,7 +16,7 @@ def black_gi_():  # 20
     gi = {}
     gi['scale'] = 0.26
     gi['alpha'] = 0.99
-    gi['zorder'] = 1000
+    gi['zorder'] = 2000
 
     if P.REAL_SCALE:
         gi['scale'] = 0.03
@@ -29,7 +29,7 @@ def sun_gi_():  # 20
     gi = {}
     gi['scale'] = 0.26
     gi['alpha'] = 0.99
-    gi['zorder'] = 1001
+    gi['zorder'] = 2001
 
     if P.REAL_SCALE:
         gi['scale'] = 0.02
@@ -46,7 +46,7 @@ def red_gi_():  # 20
     gi['tilt'] = 0
     gi['max_alpha'] = 0.6
     gi['min_alpha'] = 0.1
-    gi['zorder'] = 1002
+    gi['zorder'] = 2002
 
     return gi
 
@@ -60,7 +60,7 @@ def mid_gi_():  # 20
     gi['tilt'] = 0
     gi['max_alpha'] = 0.6
     gi['min_alpha'] = 0.1
-    gi['zorder'] = 1003
+    gi['zorder'] = 2003
 
     return gi
 
@@ -74,7 +74,7 @@ def light_gi_():  # 20
     gi['tilt'] = 0
     gi['max_alpha'] = 0.4
     gi['min_alpha'] = 0.3
-    gi['zorder'] = 1004
+    gi['zorder'] = 2004
 
     return gi
 
@@ -88,7 +88,7 @@ def h_red_gi_():  # 20
     gi['tilt'] = 0
     gi['max_alpha'] = 0.15
     gi['min_alpha'] = 0.04
-    gi['zorder'] = 1002
+    gi['zorder'] = 2002
 
     return gi
 
@@ -102,7 +102,7 @@ def h_mid_gi_():  # 20
     gi['tilt'] = 0
     gi['max_alpha'] = 0.15
     gi['min_alpha'] = 0.04
-    gi['zorder'] = 1001
+    gi['zorder'] = 2001
 
     return gi
 
@@ -116,6 +116,6 @@ def h_light_gi_():  # 20
     gi['tilt'] = 0
     gi['max_alpha'] = 0.25
     gi['min_alpha'] = 0.1
-    gi['zorder'] = 1005
+    gi['zorder'] = 2005
 
     return gi

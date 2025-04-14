@@ -25,7 +25,7 @@ def gss_gi_():  # 21
     gi = {}
     gi['r'] = 45 # 25
     gi['pi_offset'] = 0.85 * 2 * np.pi  # 0=middleTop, 0.5=middleBot,
-    gi['speed_gi'] = 14.20  #14  # OBS dont use for querying. if its same as parents it means its stationary
+    gi['speed_gi'] = 10  #14  # OBS dont use for querying. if its same as parents it means its stationary
     gi['tilt'] = -0.12 * np.pi  # 0.2  ARCTAN2
     gi['scale'] = 0.2  #0.2  # CAREFUL: AFFECTS CENTROID
     gi['centroid_mult'] = 20  #
