@@ -67,10 +67,10 @@ class O1C(AbstractObject, AbstractSSS):
 
         # Generate the elliptical motion for the planet
         y_squeeze = 0.08
-        if _s.id == 'Jupiter':
+        if _s.id in ['Astro0b', 'Jupiter']:
             y_squeeze = 0.15
-        elif _s.id == 'Astro0b':
-            y_squeeze = 0.15
+        elif _s.id in ['Saturn', 'Uranus', 'Neptune']:
+            y_squeeze = 0.2
         _s.xy_t = np.zeros((P.FRAMES_TOT_BODIES, 2), dtype=np.float32)
         _s.xy_t[:, 0] = np.sin(np.linspace(0 + _s.gi['pi_offset'], num_rot * 2 * np.pi + _s.gi['pi_offset'], P.FRAMES_TOT_BODIES)) * _s.gi['r']
         _s.xy_t[:, 1] = -np.cos(np.linspace(0 + _s.gi['pi_offset'], num_rot * 2 * np.pi + _s.gi['pi_offset'], P.FRAMES_TOT_BODIES)) * _s.gi['r'] * y_squeeze
@@ -137,6 +137,8 @@ class O1C(AbstractObject, AbstractSSS):
 
         y_range_lo = 0.01
         y_range_hi = 0.99
+        if _s.id in ['Saturn', 'Uranus', 'Neptune']:
+            y_range_hi = 0.2
 
         #DARK
         if _s.parent.id in ['Nauvis', 'Jupiter']:  # Moons
@@ -157,7 +159,7 @@ class O1C(AbstractObject, AbstractSSS):
             alphas1 = min_max_normalize_array(alphas1, y_range=[0.5 * y_range_hi, y_range_hi])  # ONLY ONE THAT CAN START ABOVE 0.01
             _s.alphas_DL.append(alphas1)
 
-        # LIGHT
+        # LIGHT: uses alphas0
         alphas2 = -np.copy(alphas0)
         # alphas2 /= np.sum(alphas2)
         alphas2 = min_max_normalize_array(alphas2, y_range=[y_range_lo, y_range_hi])  # [0.01, 0.99]

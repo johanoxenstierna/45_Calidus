@@ -44,7 +44,7 @@ def red_gi_():  # 20
     gi['pi_offset'] = 0
     gi['speed_gi'] = 1.5
     gi['tilt'] = 0
-    gi['max_alpha'] = 0.8
+    gi['max_alpha'] = 0.6
     gi['min_alpha'] = 0.1
     gi['zorder'] = 1002
 
@@ -72,8 +72,8 @@ def light_gi_():  # 20
     gi['pi_offset'] = 0
     gi['speed_gi'] = 2
     gi['tilt'] = 0
-    gi['max_alpha'] = 0.3
-    gi['min_alpha'] = 0.2
+    gi['max_alpha'] = 0.4
+    gi['min_alpha'] = 0.3
     gi['zorder'] = 1004
 
     return gi
@@ -114,8 +114,8 @@ def h_light_gi_():  # 20
     gi['pi_offset'] = 0
     gi['speed_gi'] = 5
     gi['tilt'] = 0
-    gi['max_alpha'] = 0.18
-    gi['min_alpha'] = 0.05
+    gi['max_alpha'] = 0.25
+    gi['min_alpha'] = 0.1
     gi['zorder'] = 1005
 
     return gi

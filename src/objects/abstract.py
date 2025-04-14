@@ -68,7 +68,7 @@ class AbstractObject:
                 if _s.type == 'body':
                     for pic in _s.pics_planet:
                     # pass
-                        axs0.append(ax_b.imshow(pic, zorder=_s.zorder, alpha=0, interpolation='none'))
+                        axs0.append(ax_b.imshow(pic, zorder=_s.zorder, alpha=0, interpolation='nearest'))
                         _s.axs0_inds.append(len(axs0) - 1)  # THIS -1 IS NEW: Earlier it was done above
                         _s.axs0_o1.append(axs0[-1])
                         # _s.drawn = 2  # this allows pre-filling axs0, but doesnt seem to help

@@ -2,7 +2,7 @@ import P
 
 # from sh_info import shInfoAbstract, _0_info
 from O0s_info import calidus_gi, R_gi
-from O0s_info.O1 import a_ogun_gi, b_venus_gi, c_nauvis_gi, d_mars_gi, f_jupiter_gi, z_astro0_gi
+from O0s_info.O1 import a_ogun_gi, b_venus_gi, c_nauvis_gi, d_mars_gi, f_jupiter_gi, z_astro0_gi, g_saturn_gi, h_uranus_gi, i_neptune_gi
 
 
 def _genesis():
@@ -59,6 +59,15 @@ def _genesis():
 
     if 'Astro0b' in P.OBJ_TO_SHOW:
         gis['Astro0b'] = z_astro0_gi.astro0b_gi_()
+
+    if 'Saturn' in P.OBJ_TO_SHOW:
+        gis['Saturn'] = g_saturn_gi.saturn_gi_()
+
+    if 'Uranus' in P.OBJ_TO_SHOW:
+        gis['Uranus'] = h_uranus_gi.uranus_gi_()
+
+    if 'Neptune' in P.OBJ_TO_SHOW:
+        gis['Neptune'] = i_neptune_gi.neptune_gi_()
 
     if 'Rockets' in P.OBJ_TO_SHOW:
         gis['Rockets'] = R_gi.R_gi_()

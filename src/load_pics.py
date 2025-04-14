@@ -21,7 +21,7 @@ def load_pics():
 
     # if 'Calidus' in P.OBJ_TO_SHOW:
     pics['0_black'] = imread('./pictures/Calidus0/0_cal/0_black.png')
-    pics['0_sun'] = imread('./pictures/Calidus1/0_cal/0_sun.png')
+    pics['0_sun'] = imread('./pictures/Calidus1/0_cal/0_sunR.png')
     pics['0_red'] = imread('./pictures/Calidus1/0_cal/0_red_f.png')
     pics['0_mid'] = imread('./pictures/Calidus1/0_cal/0_mid.png')
     pics['0_light'] = imread('./pictures/Calidus1/0_cal/0_light.png')
@@ -85,6 +85,21 @@ def load_pics():
     if 'Astro0b' in P.OBJ_TO_SHOW:
         pics['Astro0b'] = [imread('./pictures/Calidus1/planets/3_GSSD.png'),
                            imread('./pictures/Calidus1/planets/3_GSS.png')]
+
+    if 'Saturn' in P.OBJ_TO_SHOW:
+        pics['Saturn'] = [imread('./pictures/Calidus1/planets/7_SaturnD.png'),
+                          imread('./pictures/Calidus1/planets/7_Saturn.png'),
+                          imread('./pictures/Calidus1/planets/7_SaturnL.png')]
+
+    if 'Uranus' in P.OBJ_TO_SHOW:
+        pics['Uranus'] = [imread('./pictures/Calidus1/planets/8_UranusD.png'),
+                          imread('./pictures/Calidus1/planets/8_Uranus.png'),
+                          imread('./pictures/Calidus1/planets/8_UranusL.png')]
+
+    if 'Neptune' in P.OBJ_TO_SHOW:
+        pics['Neptune'] = [imread('./pictures/Calidus1/planets/9_NeptuneD.png'),
+                          imread('./pictures/Calidus1/planets/9_Neptune.png'),
+                          imread('./pictures/Calidus1/planets/9_NeptuneL.png')]
 
 
 

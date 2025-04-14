@@ -41,6 +41,7 @@ fig = plt.figure(figsize=(12.8, 7.2))
 # fig = plt.figure(figsize=(10, 6))
 if P.WRITE != 0:
     fig, ax_b = plt.subplots(figsize=(19.2, 10.8), dpi=100)
+
 ax_b = plt.gca()
 # fig, ax_b = plt.subplots()
 

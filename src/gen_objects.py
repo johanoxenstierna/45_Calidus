@@ -45,9 +45,9 @@ class GenObjects:
         if P.WRITE != 0:
             ax_b.axis([0, P.MAP_DIMS[0], 0, P.MAP_DIMS[1]])
         else:
-            ax_b.axis([850, 1250, 500, 700])  # GSS
+            # ax_b.axis([850, 1250, 500, 700])  # GSS
             # ax_b.axis([450, 1450, 300, 800])
-            # ax_b.axis([0, P.MAP_DIMS[0], 0, P.MAP_DIMS[1]])
+            ax_b.axis([0, P.MAP_DIMS[0], 0, P.MAP_DIMS[1]])
 
         ax_b.axis('off')  # TURN ON FOR FINAL
         ax_b.set_axis_off()
@@ -204,6 +204,30 @@ class GenObjects:
             _o1.gen_orbit()
             _o1.gen_DL()
             o0calidus.O1['Astro0b'] = _o1
+
+        if 'Saturn' in P.OBJ_TO_SHOW:
+            gi = _s.gis['Saturn']
+            pics_planet = _s.pics['Saturn']
+            o1saturn = O1C(o1_id='Saturn', gi=gi, pics_planet=pics_planet, parent=o0calidus, type='body')  # THE PIC IS ALWAYS TIED TO 1 INSTANCE?
+            o1saturn.gen_orbit()
+            o1saturn.gen_DL()
+            o0calidus.O1['Saturn'] = o1saturn
+
+        if 'Uranus' in P.OBJ_TO_SHOW:
+            gi = _s.gis['Uranus']
+            pics_planet = _s.pics['Uranus']
+            o1uranus = O1C(o1_id='Uranus', gi=gi, pics_planet=pics_planet, parent=o0calidus, type='body')  # THE PIC IS ALWAYS TIED TO 1 INSTANCE?
+            o1uranus.gen_orbit()
+            o1uranus.gen_DL()
+            o0calidus.O1['Uranus'] = o1uranus
+
+        if 'Neptune' in P.OBJ_TO_SHOW:
+            gi = _s.gis['Neptune']
+            pics_planet = _s.pics['Neptune']
+            o1neptune = O1C(o1_id='Neptune', gi=gi, pics_planet=pics_planet, parent=o0calidus, type='body')  # THE PIC IS ALWAYS TIED TO 1 INSTANCE?
+            o1neptune.gen_orbit()
+            o1neptune.gen_DL()
+            o0calidus.O1['Neptune'] = o1neptune
 
         return o0calidus
 

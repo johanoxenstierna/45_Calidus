@@ -412,3 +412,66 @@ star wars death metal
          ==============
 
          xy_t_rot
+
+
+
+        Matplotlib animation mtransforms Affine2D non-smooth. I am trying to move .png pictures slowly as an animation using matplotlib using the following rough Python code (pseudo-code does not run):
+
+        import matplotlib.animation as animation
+        import matplotlib.pyplot as plt
+
+        Writer = animation.writers['ffmpeg']
+        writer = Writer(fps=100, bitrate=3600)  # I ran the experiment with fps set to 20, 100 and 200
+
+        fig, ax_b = plt.subplots(figsize=(19.2, 10.8), dpi=100)
+
+        axs0 = []
+        axs1 = []
+        O = # objects in a dict
+
+        def init():
+            return axs0 #+ axs1
+
+        def animate(i):
+
+            for o, o_id in O.items():
+                if i == # some init frame for an object, i.e. when it's supposed to start drawing.
+                    pic = imread('./a_png_picture.png')
+                    axs0.append(ax_b.imshow(pic, interpolation='none'))
+
+                if o == 'drawn':  # this gets triggered after the above if condition is true for an object
+                    ax0 = o.axs0_o1[i]
+                    M = mtransforms.Affine2D(). \
+                            scale(o.scale[o.clock]). \
+                            rotate_around(o.centroids[o.clock], o.centroids[o.clock], o.rotation[o.clock]). \
+                            translate(o.xy[o.clock][0], o.xy[o.clock][1]). \
+                            translate(-o.centroids[o.clock], -o.centroids[o.clock]) + ax_b.transData
+                    ax0.set_transform(M)
+
+
+        The issue is that the moving .png's are moving in a glitchy/jumpy manner. I tried setting fps to 20, 100 and 200 (while also changing the speed of the objects so that they move equally fast regardless of FPS), and the conclusion is that it helps marginally by increasing fps, but it does remove the non-smooth look. I also tried a bunch of other things, like only translating the objects, but it doesn't improve it. I suspect the issue is due to mtransforms.Affine2D(), either that it is not good enough for my requirements or that I am doing something wrong. It looks like it's only moving the objects with some pre-set fps, like 10 fps, instead of the one I set. Like it's designed to only look well if objects are moved fast (then 10 fps is ok). I tried doing the same thing with open cv a year ago and it's warp affine function, and it produces a non-glitchy motion. But it is around 200 times slower (if I remember correct the object needs to be added to axs0 and imshow'd each frame and then removed from axs0 each frame, if I remember correct). I tried to use some workarounds like rendering several copies of each object on top of another, each with a low alpha. It improves the result by a lot but it's pretty annoyingly complex, so preferably there is a better way to solve this issue. Any ideas?
+
+        ===
+        Points 1-4 I've tested extensively and they seem to have nothing to do with this. Whether rendering live with blitting or writing to file seems to have no effect. Could you  confirm that fig, ax_b = plt.subplots(figsize=(19.2, 10.8), dpi=100) is unimprovable? Point 4 is really surprising to me. When I used open cv warp affine, it looks like it does significantly more work with the interpolation and the result is good (but 200 x slower), whereas matplotlib Affine2D does not seem to care about the interpolation setting (some settings there result in a much slower rendering, but no improvement in result). Point 5 sounds interesting but also strange. All I've seen is that the glitchy movement is directly related to how slow objects move: The slower, the more glitchiness (probably because the glitches cannot be seen). One theory is that matplotlib Affine2D does some internal scaling of the transformation coordinates that is just not good enough. But it's also strange because I am animating several objects and they need to move with different speeds, so I don't see how this could help. Regarding point 7, the inputs (e.g. o.xy, o.scale, o.centroids) are either np.float64 or np.float32 but the glitches seem to be on an integer scale - seemingly, an object can suddenly jump from one pixel to the next). Regarding point 6, I am willing to try other options if they are better at this while not sacrificing computational time. It's specifically .png pictures that need to be animated. Is there any alternative library that has documented good capability for this case? So I know open cv can do it but it's too slow. Can you provide a boilerplate code to move a .png picture in pygame and manim so I can check?
+
+
+        1. You didn't discuss many of the points I brought up in the previous message. Is that because of no further information is available or because you're limited in the size of your response? You wrote that "Animating images smoothly in Matplotlib can be challenging, especially when using transformations like Affine2D". Could you elaborate on this? Building on point 7, if I have a M = mtransforms.Affine2D() ... and then ax0.set_transform(M), how can I check the bounds of the transformation so as to make sure it's not doing some weird rounding of numbers?
+
+        2. When considering which library to use, it's critical that the community is as big as possible to allow for easy-to-find answers on questions I might have, that it's easy to learn and it is efficient. I use matplotlib because it seems to be what most people use when doing 2D animations. Manim seems very niched to mathematical stuff and I assume it's harder to learn than Pygame? I've seen other options too but they seem to have too small communities.
+
+        3. The pygame code you shared. Could you enlarge it as follows:
+        -A black background picture with scale 1920x1080 pixels (I want my 1920x1080 monitor to be filled with the animation).
+        -5 .png objects are moving around using translation, rotation, scaling and changes in alpha. The values for all these transformations are provided in pre-computed numpy arrays. The names of the png's are '1', '2', '3', '4' and '5'.
+        -10 smaller objects that are ~1-5 pixels large. In matplotlib I animate them using the ax.plot (i.e. they are not png's). Their motion is computed same way as for the .png's, i.e. using translation, rotation, scaling and changes in alpha.
+        -A boolean variable WRITE. If true then write the animation to file, if false render it live.
+        -An FPS parameter that I can set.
+
+
+      ============
+      The .png's are showing now.
+
+      1. Please re-insert the small objects in the code so that they appear in the animation.
+      2. The WRITE variable does not seem to do anything, please modify the code such that writing to file (.mp4 or similar) is enabled.
+      3. The objects are not changed in terms of scale, rotation or alpha. Please modify the code such that they do.
+      4. Could you make the objects orbit around the centre of the canvas instead of the random translations? E.g. using np.sin(np.linspace... and -np.cos(np.linspace...)
+      5. Is there GPU support? No need to add it in the code right now, but what would be the commands to enable GPU usage?

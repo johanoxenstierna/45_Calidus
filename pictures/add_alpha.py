@@ -7,11 +7,11 @@ from src.m_functions import *
 
 import numpy as np
 
-PATH_IN = './pictures/Calidus0/planets/'
-PATH_OUT = './pictures/Calidus1/planets/'
+# PATH_IN = './pictures/Calidus0/planets/'
+# PATH_OUT = './pictures/Calidus1/planets/'
 
-# PATH_IN = './pictures/Calidus0/0_cal/'
-# PATH_OUT = './pictures/Calidus1/0_cal/'
+PATH_IN = './pictures/Calidus0/0_cal/'
+PATH_OUT = './pictures/Calidus1/0_cal/'
 
 _, _, file_names = os.walk(PATH_IN).__next__()
 # file_names = ['1_Ogun.png']
@@ -20,7 +20,8 @@ _, _, file_names = os.walk(PATH_IN).__next__()
 # file_names = ['1_Ogun.png']
 # file_names = ['1_Ogun.png']
 # file_names = ['6_Jupiter.png']
-file_names = ['3_GSSD.png']
+# file_names = ['3_GSSD.png']
+file_names = ['0_sunR.png']
 
 '''
 Ogun: 30, min=0.2, max=0.4
@@ -43,7 +44,6 @@ for file_name in file_names:
 
 	pic = plt.imread(PATH_IN + file_name)
 	d = pic.shape[0]
-
 	if 'Ogun' in file_name:
 		_min, _max, _c = 0.2, 0.4, 2
 	elif 'Venus' in file_name:
@@ -62,29 +62,37 @@ for file_name in file_names:
 		_min, _max, _c = 0.1, 0.4, 2
 	elif 'Petussia' in file_name:
 		_min, _max, _c = 0.3, 0.6, 2
-	else:
-		raise Exception("What you're saying to yourself matters.")
-	# rv_pos = multivariate_normal(mean=[d / 2, d / 2], cov=[[d * 15, 0], [0, d * 15]])  # 0_sun more=more visible
+	elif 'Saturn' in file_name:
+		_min, _max, _c = 0.05, 0.2, 2
+	elif 'Uranus' in file_name:
+		_min, _max, _c = 0.05, 0.2, 2
+	elif 'Neptune' in file_name:
+		_min, _max, _c = 0.05, 0.2, 2
+	# else:
+	# 	raise Exception("What you're saying to yourself matters.")
+	rv_pos = multivariate_normal(mean=[d / 2, d / 2], cov=[[d * 15, 0], [0, d * 15]])  # 0_sun more=more visible
 	# rv_pos = multivariate_normal(mean=[d / 2, d / 2], cov=[[d * 40, 0], [0, d * 40]])  # 0_cal more=more visible
 	# rv_pos = multivariate_normal(mean=[d / 2, d / 2], cov=[[d * 2, 0], [0, d * 2]])  # PLANETS more=more visible  GSS: 0.5
-	rv_pos = multivariate_normal(mean=[d / 2, d / 2], cov=[[d * _c, 0], [0, d * _c]])
+	# rv_pos = multivariate_normal(mean=[d / 2, d / 2], cov=[[d * _c, 0], [0, d * _c]])
 
 	x, y = np.mgrid[0:d:1, 0:d:1]
 	pos = np.dstack((x, y))
 
-	alpha_mask_pos = rv_pos.pdf(pos)
-	alpha_mask_pos = min_max_normalize_array(alpha_mask_pos, y_range=[0.01, 1])
-	alpha_mask_pos = np.clip(alpha_mask_pos, min=_min, max=_max)  # clip bottom  min: more=>less
-	alpha_mask_pos = min_max_normalize_array(alpha_mask_pos, y_range=[0.01, 1])
+	'''non-sun'''
+	# alpha_mask_pos = rv_pos.pdf(pos)
+	# alpha_mask_pos = min_max_normalize_array(alpha_mask_pos, y_range=[0.01, 1])
+	# alpha_mask_pos = np.clip(alpha_mask_pos, min=_min, max=_max)  # clip bottom  min: more=>less
+	# alpha_mask_pos = min_max_normalize_array(alpha_mask_pos, y_range=[0.01, 1])
 
 	'''sun'''
-	# alpha_mask_pos = np.clip(alpha_mask_pos, min=0.00001, max=0.9)  # clip top
-	# alpha_mask_pos = np.clip(alpha_mask_pos, min=0.1, max=0.9)  # clip bottom
-
+	alpha_mask_pos = rv_pos.pdf(pos)
+	alpha_mask_pos = min_max_normalize_array(alpha_mask_pos, y_range=[0.01, 1])
+	alpha_mask_pos = np.clip(alpha_mask_pos, min=0.00001, max=0.9)  # clip top
+	alpha_mask_pos = np.clip(alpha_mask_pos, min=0.1, max=0.9)  # clip bottom
 	# alpha_mask_pos = np.clip(alpha_mask_pos, min=0.00001, max=0.55)  # clip top
 	# alpha_mask_pos = np.clip(alpha_mask_pos, min=0.3, max=0.55)  # clip bottom
 	# alpha_mask_pos = alpha_mask_pos / np.max(alpha_mask_pos)
-	# alpha_mask_pos = min_max_normalize_array(alpha_mask_pos, y_range=[0.01, 1])
+	alpha_mask_pos = min_max_normalize_array(alpha_mask_pos, y_range=[0.01, 1])
 
 	adf = 6
 	pic[:, :, 3] = alpha_mask_pos
