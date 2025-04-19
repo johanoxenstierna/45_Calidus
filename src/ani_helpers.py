@@ -45,18 +45,20 @@ def set_data_O1(o, ax_b):
 
 	if o.type == 'body':
 		if len(o.pics_planet) > 1:
-			for i in range(len(o.axs0_o1)):
+			for i in range(len(o.axs0_o1)):  # DL
 				ax0 = o.axs0_o1[i]
 				M = mtransforms.Affine2D(). \
 						scale(o.scale[o.clock]). \
 						rotate_around(o.centroids[o.clock], o.centroids[o.clock], o.rotation[o.clock]). \
 						translate(o.xy[o.clock][0], o.xy[o.clock][1]). \
 						translate(-o.centroids[o.clock], -o.centroids[o.clock]) + ax_b.transData
+						#
+						#
 				ax0.set_transform(M)
 				ax0.set_alpha(o.alphas_DL[i][o.clock])
 				ax0.set_zorder(int(o.zorders_DL[i][o.clock]))
 
-		else:
+		else:  # NO for loop!
 			ax0 = o.axs0_o1[0]
 			M = mtransforms.Affine2D(). \
 				scale(o.scale[o.clock]). \
@@ -75,13 +77,9 @@ def set_data_O1(o, ax_b):
 		o.ax0.set_transform(M)
 		o.ax0.set_alpha(o.alphas[o.clock])
 		o.ax0.set_zorder(int(o.zorders[o.clock]))
-	elif o.type in['0_static']:
+	elif o.type in['0_static']:  # KEEP THIS: PLACEHOLDER FOR 'SUN'
 		pass
-		# o.ax0.set_alpha(1)
-		# o.ax0.set_zorder(int(o.zorders[o.clock]))
-
 	elif o.type in ['astro']:
-
 		M = mtransforms.Affine2D(). \
 				rotate_around(530, 540, o.rotation[o.clock]). \
 				scale(1.3, 0.2). \
@@ -96,8 +94,6 @@ def set_data_O1(o, ax_b):
 		o.ax0.set_transform(M)
 		o.ax0.set_alpha(o.alphas[o.clock])
 		o.ax0.set_zorder(int(o.zorders[o.clock]))
-
-
 	else:
 		raise Exception("This o1 does not exist*&&*(")
 

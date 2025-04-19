@@ -57,7 +57,9 @@ class O1C(AbstractObject, AbstractSSS):
         """
 
         tot_dist = _s.gi['speed_gi'] * P.FRAMES_TOT_BODIES
-        num_rot = tot_dist / 6000
+        num_rot = tot_dist / 6000  # Jupiter: num_rut=1 when speed_mult=1 & 4000 frames
+        if _s.id == 'Jupiter':
+            adf = 5
         if P.REAL_SCALE:
             pdf = -np.log(np.linspace(1, 100, 100))
             pdf += abs(min(pdf))
@@ -70,8 +72,10 @@ class O1C(AbstractObject, AbstractSSS):
         y_squeeze = 0.08
         if _s.id in ['Astro0b', 'Jupiter']:
             y_squeeze = 0.15
+        elif _s.id in ['Jupiter']:
+            y_squeeze = 0.3
         elif _s.id in ['Saturn', 'Uranus', 'Neptune']:
-            y_squeeze = 0.2
+            y_squeeze = 0.35
         _s.xy_t = np.zeros((P.FRAMES_TOT_BODIES, 2), dtype=np.float32)
         _s.xy_t[:, 0] = np.sin(np.linspace(0 + _s.gi['pi_offset'], num_rot * 2 * np.pi + _s.gi['pi_offset'], P.FRAMES_TOT_BODIES)) * _s.gi['r']
         _s.xy_t[:, 1] = -np.cos(np.linspace(0 + _s.gi['pi_offset'], num_rot * 2 * np.pi + _s.gi['pi_offset'], P.FRAMES_TOT_BODIES)) * _s.gi['r'] * y_squeeze
@@ -109,7 +113,7 @@ class O1C(AbstractObject, AbstractSSS):
             _s.rotation = np.linspace(0 + _s.gi['pi_offset'], num_rot * 2 * np.pi + _s.gi['pi_offset'], P.FRAMES_TOT_BODIES)
             # _s.rotation = np.full((P.FRAMES_TOT_BODIES,), fill_value=0)
             _s.scale = np.copy(_s.xy_t[:, 1])
-            _s.scale = min_max_normalize_array(_s.scale, y_range=[0.7 * _s.gi['scale'], _s.gi['scale']])
+            _s.scale = min_max_normalize_array(_s.scale, y_range=[0.6 * _s.gi['scale'], _s.gi['scale']])
         else:
             _s.speed_max0 = max(np.linalg.norm(_s.parent.vxy, axis=1))  # only use parent to avoid fast orbitals
             _s.rotation = _s.parent.rotation
@@ -133,34 +137,43 @@ class O1C(AbstractObject, AbstractSSS):
 
         y_range_lo = 0.01
         y_range_hi = 0.99
-        if _s.id in ['Saturn', 'Uranus', 'Neptune']:
+        if _s.id in ['Uranus', 'Neptune']:
             y_range_hi = 0.2
+        elif _s.id in ['Saturn']:
+            y_range_hi = 0.4
 
         #DARK
+        alphas0 = np.copy(_s.xy_t[:, 1])  # DARK  # the more down, the more dark
         if _s.parent.id in ['Nauvis', 'Jupiter']:  # Moons
-            alphas0 = np.copy(_s.parent.xy_t[:, 1])  # DARK  # the more down, the more dark
-        else:
-            alphas0 = np.copy(_s.xy_t[:, 1])  # DARK  # the more down, the more dark
-        alphas0 = min_max_normalize_array(alphas0, y_range=[y_range_lo, y_range_hi])  # [0.01, 0.99]
+            alphas0 = np.copy(_s.parent.xy_t[:, 1])  # DARK  # the more down, th
         if _s.id in ['GSS', 'Astro0b']:
             alphas0 = min_max_normalize_array(alphas0, y_range=[y_range_lo, y_range_hi])
+        elif _s.id in ['Jupiter']:
+            alphas0 = min_max_normalize_array(alphas0, y_range=[y_range_lo, y_range_hi])
+        else:
+            alphas0 = min_max_normalize_array(alphas0, y_range=[y_range_lo, y_range_hi])  # [0.01, 0.99]
         _s.alphas_DL.append(alphas0)
 
         # MID
         if len(_s.pics_planet) == 3:
-            if _s.parent.id == 'Jupiter':
+            alphas1 = np.copy(_s.xy_t[:, 1])  # REMEMBER, THIS IS DUE TO X=0 BEING USED AS REFERENCE
+            if _s.id in ['Jupiter']:
+                alphas1 = min_max_normalize_array(alphas1, y_range=[0.95 * y_range_hi, y_range_hi])
+            elif _s.parent.id == 'Jupiter':
                 alphas1 = np.copy(_s.parent.xy_t[:, 1])  #
+                alphas1 = min_max_normalize_array(alphas1, y_range=[0.98 * y_range_hi, y_range_hi])  # ONLY ONE THAT CAN START ABOVE 0.01
             else:
-                alphas1 = np.copy(_s.xy_t[:, 1])  # does not change value in _s.alphas_DL
-            alphas1 = min_max_normalize_array(alphas1, y_range=[0.5 * y_range_hi, y_range_hi])  # ONLY ONE THAT CAN START ABOVE 0.01
+                alphas1 = min_max_normalize_array(alphas1, y_range=[0.5 * y_range_hi, y_range_hi])
             _s.alphas_DL.append(alphas1)
 
         # LIGHT: uses alphas0
         alphas2 = -np.copy(alphas0)
-        # alphas2 /= np.sum(alphas2)
-        alphas2 = min_max_normalize_array(alphas2, y_range=[y_range_lo, y_range_hi])  # [0.01, 0.99]
         if _s.id in ['GSS', 'Astro0b']:
             alphas2 = min_max_normalize_array(alphas2, y_range=[0.3 * y_range_hi, y_range_hi])  # [0.01, 0.99]
+        elif _s.id in ['Jupiter', 'Saturn']:
+            alphas2 = min_max_normalize_array(alphas2, y_range=[y_range_lo, 0.5 * y_range_hi])
+        else:
+            alphas2 = min_max_normalize_array(alphas2, y_range=[y_range_lo, y_range_hi])  # [0.01, 0.99]
         _s.alphas_DL.append(alphas2)
 
         '''ZORDERS'''
@@ -172,7 +185,7 @@ class O1C(AbstractObject, AbstractSSS):
         zorders0[pos_zorders_inds] += 1
         _s.zorders_DL.append(zorders0)
 
-        if len(_s.pics_planet) == 3:
+        if len(_s.pics_planet) == 3: # For non GSS and astro probably
             zorders1 = np.copy(_s.zorders) - 2  # always behind
             _s.zorders_DL.append(zorders1)
 

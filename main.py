@@ -1,17 +1,7 @@
 """
-Matplotlib animation of projectiles, waves and clouds
+ani_helpers -> random tiny xy changes.
+More yellow sun
 
-Only create 1 stns and Y map (or whatever TF its called).
-
-YT still needed!
-
--*Foam f twist after h (probably just shift)
--zorder.
--increase c
--rotate_around
--scale
--tune foam in 1 and 2
--MORERandom b foam flying into air.
 """
 
 import matplotlib.pyplot as plt

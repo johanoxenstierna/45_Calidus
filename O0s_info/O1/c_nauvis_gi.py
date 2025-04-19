@@ -11,7 +11,7 @@ def nauvis_gi_():  # 20
     gi['speed_gi'] = 4  # 4
     gi['tilt'] = 0.1 * np.pi  # 0.15     0.12 * 2 * np.pi  is 45 deg ARCTAN2 MINUS US UP
     gi['scale'] = 0.4  # 0.3
-    gi['centroid_mult']= 8
+    gi['centroid_mult']= 4  # ONLY USED TO CONTROL SIZE OF TAKEOFF ORBIT
 
     if P.REAL_SCALE:
         gi['r'] = 154
@@ -23,12 +23,12 @@ def nauvis_gi_():  # 20
 
 def gss_gi_():  # 21
     gi = {}
-    gi['r'] = 45 # 25
+    gi['r'] = 25 # 25
     gi['pi_offset'] = 0.85 * 2 * np.pi  # 0=middleTop, 0.5=middleBot,
     gi['speed_gi'] = 10  #14  # OBS dont use for querying. if its same as parents it means its stationary
     gi['tilt'] = -0.12 * np.pi  # 0.2  ARCTAN2
     gi['scale'] = 0.2  #0.2  # CAREFUL: AFFECTS CENTROID
-    gi['centroid_mult'] = 20  #
+    gi['centroid_mult'] = 10  #  pic=20x20 -> scale=0.2 -> newSize=2px -> *centroid_mult
 
     return gi
 
@@ -36,12 +36,12 @@ def gss_gi_():  # 21
 def molli_gi_():
 
     gi = {}
-    gi['r'] = 30
+    gi['r'] = 40
     gi['pi_offset'] = 0
     gi['speed_gi'] = 10
     gi['tilt'] = 0.099 * 2 * np.pi
     gi['scale'] = 0.5
-    gi['dist_cond_mult'] = 3
+    gi['centroid_mult'] = 4
 
     if P.REAL_SCALE:
         gi['r'] = 10

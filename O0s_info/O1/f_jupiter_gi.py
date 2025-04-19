@@ -5,11 +5,11 @@ import P
 def jupiter_gi_():
 
     gi = {}
-    gi['r'] = 800  # 5.2
-    gi['pi_offset'] = 0.1 * 2 * np.pi
+    gi['r'] = 1000  # 5.2
+    gi['pi_offset'] = 0.8 * 2 * np.pi   # 0.2
     gi['speed_gi'] = 1.5  #1.5
     gi['tilt'] = 0.05 * 2 * np.pi  # 0.15     0.12 * 2 * np.pi  is 45 deg
-    gi['scale'] = 0.4
+    gi['scale'] = 0.3
     gi['centroid_mult'] = 8
 
     if P.REAL_SCALE:
@@ -24,11 +24,11 @@ def jupiter_gi_():
 def everglade_gi_():
 
     gi = {}
-    gi['r'] = 20
+    gi['r'] = 40
     gi['pi_offset'] = 0
     gi['speed_gi'] = 20
     gi['tilt'] = 0.099 * 2 * np.pi
-    gi['scale'] = 0.3
+    gi['scale'] = 0.2
     gi['centroid_mult'] = 8
 
     if P.REAL_SCALE:
@@ -42,11 +42,11 @@ def everglade_gi_():
 def petussia_gi_():
 
     gi = {}
-    gi['r'] = 40
+    gi['r'] = 60
     gi['pi_offset'] = 0
     gi['speed_gi'] = 15
     gi['tilt'] = 0.15 * 2 * np.pi
-    gi['scale'] = 0.5
+    gi['scale'] = 0.4
     gi['centroid_mult'] = 8
 
     if P.REAL_SCALE:

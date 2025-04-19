@@ -9,7 +9,7 @@ import P
 def uranus_gi_():  # 20
 
     gi = {}
-    gi['r'] = 1100
+    gi['r'] = 1200
     gi['pi_offset'] = 0.85 * 2 * np.pi
     gi['speed_gi'] = 0.4  # 4
     gi['tilt'] = 0.07 * 2 * np.pi

@@ -12,7 +12,7 @@ def ogun_gi_():
     gi['speed_gi'] = 6  #5
     gi['tilt'] = 0.04 * 2 * np.pi  # 0.3
     gi['scale'] = 0.4
-    gi['centroid_mult'] = 8  # this means mid_flight will be cut at 8x radius and landing r will be 4
+    gi['centroid_mult'] = 5  # this means mid_flight will be cut at 8x radius and landing r will be 4
 
     if P.REAL_SCALE:
         gi['r'] = 58
