@@ -71,12 +71,19 @@ class AbstractObject:
                         axs0.append(ax_b.imshow(pic, zorder=_s.zorder, alpha=0, interpolation='nearest'))
                         _s.axs0_inds.append(len(axs0) - 1)  # THIS -1 IS NEW: Earlier it was done above
                         _s.axs0_o1.append(axs0[-1])
-                        # _s.drawn = 2  # this allows pre-filling axs0, but doesnt seem to help
 
-                        # _s.ax0 = axs0[len(axs0) - 1]
-                        # _s.ax0 = axs0[len(axs0) - 1]  # - 1
-                        # _s.ax0 = axs0[len(axs0) - 1]
-
+                    if _s.id == 'Nauvis' and 'YearsDays' in P.OBJ_TO_SHOW:
+                        year_day = ax_b.text(
+                            0.05, 0.1,  # Relative coords (x, y) in axis fraction (0 to 1)
+                            'sfgsdfgfd',  # Initial blank text
+                            transform=ax_b.transAxes,  # Make sure coords are relative to axes
+                            fontsize=12,
+                            color='white',
+                            # ha='left', va='bottom',
+                            zorder=10000  # Ensure it's above everything else
+                        )
+                        _s.ax_year_day = year_day
+                        axs0.append(year_day)  # Optional: keep consistent with your system
                 elif _s.type in ['0_', 'astro']:
                     axs0.append(ax_b.imshow(_s.pic, zorder=_s.zorder, alpha=0, interpolation='none'))
                     _s.ax0 = axs0[len(axs0) - 1]

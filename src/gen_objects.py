@@ -26,8 +26,7 @@ class GenObjects:
     def __init__(_s):
         _s.pics = None
         _s.gis = None
-        # _s.PATH_IMAGES = './pictures/processed/'
-        # _s.ch = ch
+        _s._years_days = None
 
     def gen_backgr(_s, ax_b):
 
@@ -310,6 +309,8 @@ class GenObjects:
 
     def real_scale(_s):
         aaa = 5
+
+
 
 
 # ddist_subset = ddist[dist_inds_sorted_subset]

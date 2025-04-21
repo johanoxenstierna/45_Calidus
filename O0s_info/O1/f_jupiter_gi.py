@@ -29,7 +29,7 @@ def everglade_gi_():
     gi['speed_gi'] = 20
     gi['tilt'] = 0.099 * 2 * np.pi
     gi['scale'] = 0.2
-    gi['centroid_mult'] = 8
+    gi['centroid_mult'] = 12
 
     if P.REAL_SCALE:
         gi['r'] = 5
@@ -47,7 +47,7 @@ def petussia_gi_():
     gi['speed_gi'] = 15
     gi['tilt'] = 0.15 * 2 * np.pi
     gi['scale'] = 0.4
-    gi['centroid_mult'] = 8
+    gi['centroid_mult'] = 12
 
     if P.REAL_SCALE:
         gi['r'] = 10

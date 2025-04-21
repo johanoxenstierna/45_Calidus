@@ -22,7 +22,7 @@ def load_pics():
     # if 'Calidus' in P.OBJ_TO_SHOW:
     pics['0_black'] = imread('./pictures/Calidus0/0_cal/0_black.png')
     pics['0_sun'] = imread('./pictures/Calidus1/0_cal/0_sunR.png')
-    pics['0_red'] = imread('./pictures/Calidus1/0_cal/0_red_f.png')
+    pics['0_red'] = imread('./pictures/Calidus1/0_cal/0_light.png')  # OBS
     pics['0_mid'] = imread('./pictures/Calidus1/0_cal/0_mid.png')
     pics['0_light'] = imread('./pictures/Calidus1/0_cal/0_light.png')
     pics['0h_red'] = imread('./pictures/Calidus1/0_cal/0h_red.png')

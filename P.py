@@ -10,12 +10,12 @@ FRAMES_TOT_BODIES = FRAMES_STOP - 25
 FRAMES_TOT = FRAMES_STOP - FRAMES_START
 
 FPS = 100  # 17:31
-SPEED_MULTIPLIER = 1 # 0.4  latest: 0.4
+SPEED_MULTIPLIER = 0.4 # 0.4  latest: 0.4
 WRITE = 0
 REAL_SCALE = 0
 
 OBJ_TO_SHOW = []
-# OBJ_TO_SHOW.append('Calidus')  # JUST USE ALPHA in main
+OBJ_TO_SHOW.append('Calidus')  # JUST USE ALPHA in main
 # OBJ_TO_SHOW.append('Ogun')
 # OBJ_TO_SHOW.append('Venus')
 OBJ_TO_SHOW.append('Nauvis')
@@ -28,9 +28,10 @@ OBJ_TO_SHOW.append('Jupiter')
 OBJ_TO_SHOW.append('Everglade')
 OBJ_TO_SHOW.append('Petussia')
 OBJ_TO_SHOW.append('Saturn')
-OBJ_TO_SHOW.append('Uranus')
-OBJ_TO_SHOW.append('Neptune')
+# OBJ_TO_SHOW.append('Uranus')
+# OBJ_TO_SHOW.append('Neptune')
 OBJ_TO_SHOW.append('Rockets')
+# OBJ_TO_SHOW.append('YearsDays')
 
 VID_SINGLE_WORD = '_'
 for word in OBJ_TO_SHOW:

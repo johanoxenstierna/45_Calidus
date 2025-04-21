@@ -496,4 +496,33 @@ star wars death metal
       Related to this is your proposal two messages ago about replacing distance with a Progress Ratio, but I am currently quite against that due to the just above mentioned scenario that the distance to p1 may increase. Distance is simple.
 
 
+    ======
+
+    Moving on to another thing. I want to show a year and days counter (from Earth frame of reference) at the lower left side of the animation.
+
+    1. How to get number of days:
+
+    Since I'm not building a 100% realistic solar system depiction, it doesn't have to be exact. The way I construct the orbit of a planet begins with the following:
+
+    tot_dist = _s.gi['speed_gi'] * P.FRAMES_TOT_BODIES
+    num_rot = tot_dist / 6000
+
+    _s.gi is a dict containing info regarding planet (or other) objects. speed_gi is supposed to be speed in terms of px/frame, but it's really just an initialization and I'm not sure how close that speed ends up being to what is actually shown later on. P.FRAMES_TOT_BODIES is number of frames. Anyways the main variable I suppose one can work with is num_rot, aka, number of orbits for the whole duration of the animation. I do not remember why I compute it as tot_dist / 6000, but it looks ok and I don't see any strong reason to change it. So the number of days I assume is num_rot * 365 and I can create a new np array days = np.linspace(1, num_rot * 365, P.FRAMES_TOT_BODIES, dtype=np.int32), followed by an array years_days that converts these days to corresponding years/days strings (without showing any years when years < 1). Please propose how this can be built.
+    Any objections so far?
+
+    2. How to show years and days in a matplotlib animation:
+
+    Currently, displayed objects in the animation are either added like this: axs0.append(ax_b.imshow(pic)) (planets/moons etc) or like this: axs0.append(ax_b.plot(_s.xy[0, 0], _s.xy[0, 1])) (rockets), where axs0 is the list of drawables and ax_b comes from   fig, ax_b = plt.subplots(figsize=(19.2, 10.8), dpi=100). These objects are then modified in the animation loop by setters e.g. like this (for a rocket object 'o'):
+
+    o.ax0.set_data(xys_cur)
+	o.ax0.set_alpha(o.alphas[o.clock])
+	o.ax0.set_zorder(o.zorders[o.clock])
+	o.ax0.set_color((o.color[o.clock], o.color[o.clock], o.color[o.clock]))
+
+    o.clock is just a frame (I gave the objects their own clock to allow them to be added at an init_frame > 0).
+
+    How can I extend my code with an ax object that, in each iteration, shows the corresponding year day.
+
+
+
 

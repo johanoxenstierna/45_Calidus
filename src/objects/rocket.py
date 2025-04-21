@@ -163,16 +163,17 @@ class Rocket(AbstractObject, AbstractSSS):
 
             # NEW: DYNAMIC SPEED_FAR
             if dist > 300:  # IF FAR, USE PARENT SPEED (when p1 is orbiting a planet)
-                speed_far = _s.p1.speed_max0 * 1.1
+                speed_far = _s.p1.speed_max0 * 1.05
             elif dist < 150:  # IF CLOSE, ALLOW FASTER SPEED
-                speed_far = _s.p1.speed_max1 * 1.2
+                speed_far = _s.p1.speed_max1 * 1.1
             else:  # BLENDED
                 t = (dist - 150) / (300 - 150)
-                speed_far = ((1 - t) * _s.p1.speed_max1 + t * _s.p1.speed_max0) * 1.1
+                speed_far = ((1 - t) * _s.p1.speed_max1 + t * _s.p1.speed_max0) * 1.05
 
             vxy_new = _pid_pos01 / (np.linalg.norm(_pid_pos01) + 1e-6) * speed_far  #speed_non_smoothed
 
             vxy_i = vxy_i * (1 - speed_smoothing) + vxy_new * speed_smoothing
+            vxy_i[1] *= 0.9
             speed_debug = np.linalg.norm(vxy_i)
             xy_i += vxy_i
 
@@ -295,7 +296,6 @@ class Rocket(AbstractObject, AbstractSSS):
                 weights(w_p1_actual) * p1_actuall
         )
 
-
         # =============================================
 
         _s.xy = np.concatenate((_s.xy, np.asarray(xy)))
@@ -356,111 +356,6 @@ class Rocket(AbstractObject, AbstractSSS):
             derivative = self.kd * (error - self.prev_error)
             self.prev_error = error
             return proportional + integral + derivative
-
-    # def mid_flight(_s):
-    #
-    #     '''
-    #     '''
-    #
-    #     kp = 0.99
-    #     ki = 0.00
-    #     kd = 0.05
-    #     _s.pid_pos = _s.PIDController(kp=kp, ki=ki, kd=kd)
-    #     _s.pid_vel = _s.PIDController(kp=kp, ki=ki, kd=kd)
-    #
-    #     xy_i = np.copy(_s.xy[-1, :])
-    #     vxy_i = np.array([_s.xy[-1, 0] - _s.xy[-2, 0], _s.xy[-1, 1] - _s.xy[-2, 1]])  # dictates max speed currently
-    #
-    #     num_frames = int(0.8 * _s.gi['frames_max'])  # No need for speed here cuz break
-    #
-    #     '''OBS len(xy) - 1 GIVES LAST xy ADDED i.e. CURRENT, BUT LOOP BELOW SHOULD USE NEXT VALUES ie range(1, num)
-    #     BCS OTHERWISE AFTER xy.append() the latest xy will be one step ahead of p1,
-    #     and that prevents clean way to retrieve values after loop
-    #     '''
-    #
-    #     p1_xy = _s.p1.xy[_s.init_frame + len(_s.xy) - 1:_s.init_frame + len(_s.xy) - 1 + num_frames]
-    #     p1_vxy = _s.p1.vxy[_s.init_frame + len(_s.xy) - 1:_s.init_frame + len(_s.xy) - 1 + num_frames]
-    #     dist_diff_max = 200  # np.linalg.norm(p1_xy[0] - xy_i)
-    #     vel_diff_max = np.array([_s.p1.speed_max * 2, _s.p1.speed_max * 2])  # MIGHT NEED SEPARATE X Y HERE
-    #     speed_diff_at_end_sought = 0.3
-    #     speed_far = _s.p1.speed_max * 1.1
-    #     speed_smoothing = 0.1  # this amount is vxy_new and 1-this is vxy_i
-    #
-    #     dist_cond_break = 15
-    #
-    #     xy = []
-    #     vxy = []
-    #
-    #     for i in range(1, num_frames):  # where will you be next frame? Then I will append myself to that.
-    #
-    #         if i == 52:
-    #             adfg = 5
-    #
-    #         error_pos = p1_xy[i] - xy_i
-    #         error_vel = p1_vxy[i] - vxy_i
-    #
-    #         _pid_pos = _s.pid_pos.update(error_pos)
-    #         _pid_vel = _s.pid_vel.update(error_vel)
-    #
-    #         norm_pos = np.linalg.norm(_pid_pos) + 1e-6
-    #         norm_vel = np.linalg.norm(_pid_vel) + 1e-6
-    #
-    #         _pid_pos01 = _pid_pos / norm_pos * min(norm_pos / dist_diff_max, 1.0)
-    #         _pid_vel01 = _pid_vel / norm_vel * min(norm_vel / np.linalg.norm(vel_diff_max), 1.0)
-    #
-    #         dist01 = np.linalg.norm(error_pos) + 1e-6
-    #         dist01 = np.clip(dist01 / dist_diff_max, 0.0, 1.0)  # Fades from 1 (far) to 0 (close)
-    #         dist01 = max(dist01, 0.999)  # always use at least 50% position
-    #
-    #         vxy_new = dist01 * _pid_pos01 + (1 - dist01) * _pid_vel01  # SHOULD BE 0-1
-    #
-    #         speed_p1 = np.linalg.norm(p1_vxy[i])
-    #         speed_near = speed_p1 + speed_diff_at_end_sought
-    #         speed_non_smoothed = dist01 * speed_far + (1 - dist01) * speed_near
-    #
-    #         vxy_new = vxy_new / (np.linalg.norm(vxy_new) + 1e-6) * speed_non_smoothed
-    #
-    #         vxy_i = vxy_i * (1 - speed_smoothing) + vxy_new * speed_smoothing
-    #         speed_debug = np.linalg.norm(vxy_i)
-    #         xy_i += vxy_i
-    #
-    #         xy.append(np.copy(xy_i))
-    #         vxy.append(np.copy(vxy_i))
-    #
-    #         dist = np.linalg.norm(p1_xy[i] - xy_i)
-    #         if dist < dist_cond_break:
-    #             break
-    #
-    #     '''Correction based on difference in speed between rocket and p1 at this stage.
-    #     Rocket speed will generally not be speed_p1 + speed_diff_at_end here because of speed_smoothing.
-    #     TODO: speed_diff_at end sought does not necessarily have to be constant. If rocket is much faster than p1 then just do two orbits in the landing.
-    #     '''
-    #     NUM_CORR = 20
-    #     if len(xy) > 20:
-    #         # speed_end = np.linalg.norm(np.array([xy[-1][0] - xy[-2][0], xy[-1][1] - xy[-2][1]]))
-    #         speed_current = np.linalg.norm(vxy[-1])
-    #         speed_sought = np.linalg.norm(p1_vxy[len(xy)]) + speed_diff_at_end_sought
-    #         # speed_multiplier = speed_sought / (speed_current + 1e-6)
-    #         scale_factors = np.linspace(1.0, speed_sought / (speed_current + 1e-6), NUM_CORR)
-    #         vxy_scaled = [v * f for v, f in zip(vxy[-NUM_CORR:], scale_factors)]
-    #         xy_scaled = [xy[-NUM_CORR]]
-    #         for i in range(1, len(vxy_scaled)):
-    #             xy_scaled.append(xy_scaled[-1] + vxy_scaled[i])
-    #         xy = xy[0:len(xy) - NUM_CORR] + xy_scaled
-    #
-    #     # ZORDERS ====================================
-    #     zorders = np.full((len(xy),), fill_value=_s.zorders[-1])
-    #     # ============================================
-    #
-    #     _s.xy = np.concatenate((_s.xy, np.asarray(xy, dtype=np.float32)))
-    #     _s.alphas = np.concatenate((_s.alphas, np.full((len(xy),), fill_value=0.5)))
-    #     _s.zorders = np.concatenate((_s.zorders, zorders))
-    #
-    #     p1_xy_debug = _s.p1.xy[_s.init_frame + len(_s.xy) - 1]  # THIS IS NOW THE CURRENT VALUE
-    #     speed_i_debug = np.linalg.norm(np.array([_s.xy[-1, 0] - _s.xy[-2, 0], _s.xy[-1, 1] - _s.xy[-2, 1]]))
-    #     speed_p1_debug = np.linalg.norm(_s.p1.vxy[_s.init_frame + len(_s.xy) - 1])
-    #     speed_diff_debug = speed_p1_debug + speed_diff_at_end_sought - speed_i_debug
-    #     ads = 5
 
 
 

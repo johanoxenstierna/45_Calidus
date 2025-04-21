@@ -48,6 +48,10 @@ class O1C(AbstractObject, AbstractSSS):
         _s.alphas_DL = []
         _s.zorders_DL = []
 
+        # ONLY NAUVIS
+        _s.years_days = None
+        _s.ax_year_day = None
+
         _s.set_frame_ss(0, P.FRAMES_TOT_BODIES)  # OBS -1 important cuz arrays are UBE
 
     def gen_orbit(_s):
@@ -58,9 +62,11 @@ class O1C(AbstractObject, AbstractSSS):
 
         tot_dist = _s.gi['speed_gi'] * P.FRAMES_TOT_BODIES
         num_rot = tot_dist / 6000  # Jupiter: num_rut=1 when speed_mult=1 & 4000 frames
-        if _s.id == 'Jupiter':
-            adf = 5
-        if P.REAL_SCALE:
+
+        if _s.id == 'Nauvis':
+            _s.years_days = _s._years_days(num_rot)
+
+        if P.REAL_SCALE:  # ???
             pdf = -np.log(np.linspace(1, 100, 100))
             pdf += abs(min(pdf))
             pdf = min_max_normalize_array(pdf, y_range=[10, 40])
@@ -252,3 +258,19 @@ class O1C(AbstractObject, AbstractSSS):
         # _s.rotation = -np.linspace(pi_offset_distr, pi_offset_distr + num_rot * 2 * np.pi, P.FRAMES_TOT_BODIES)
         _s.rotation = np.linspace(0, num_rot * np.pi, P.FRAMES_TOT_BODIES)
         # _s.rotation = np.full((P.FRAMES_TOT_BODIES,), fill_value=0)
+
+    def _years_days(_s, num_rot):
+
+        days = np.linspace(1, int(num_rot * 365), P.FRAMES_TOT_BODIES, dtype=np.int32)
+
+        years_days = []
+
+        for d in days:
+            years = d // 365
+            rem_days = d % 365
+            if years < 1:
+                years_days.append(f"Day {rem_days}")
+            else:
+                years_days.append(f"Year {years} Day {rem_days}")
+
+        return years_days

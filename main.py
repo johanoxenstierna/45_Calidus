@@ -29,9 +29,9 @@ writer = Writer(fps=P.FPS, bitrate=3600)  #, extra_args=['-vcodec', 'h264_nvenc'
 if P.WRITE != 0:
     fig, ax_b = plt.subplots(figsize=(19.2, 10.8), dpi=100)
 else:
-    fig, ax_b = plt.subplots(figsize=(19.2, 10.8), dpi=100)
+    # fig, ax_b = plt.subplots(figsize=(19.2, 10.8), dpi=100)
     # fig = plt.figure(figsize=(16, 9), dpi=1920/16)
-    # fig = plt.figure(figsize=(12.8, 7.2))
+    fig = plt.figure(figsize=(12.8, 7.2))
     # fig = plt.figure(figsize=(10, 6))
 
 ax_b = plt.gca()
@@ -119,6 +119,9 @@ def animate(i):
                 elif rocket.drawn == 3:
                     prints += "  removing rocket"
                     decrement_all_index_axs0(index_removed, R)
+
+
+
 
     if i % 100 == 0:
         print(prints)

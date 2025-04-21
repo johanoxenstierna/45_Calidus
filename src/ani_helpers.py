@@ -52,8 +52,6 @@ def set_data_O1(o, ax_b):
 						rotate_around(o.centroids[o.clock], o.centroids[o.clock], o.rotation[o.clock]). \
 						translate(o.xy[o.clock][0], o.xy[o.clock][1]). \
 						translate(-o.centroids[o.clock], -o.centroids[o.clock]) + ax_b.transData
-						#
-						#
 				ax0.set_transform(M)
 				ax0.set_alpha(o.alphas_DL[i][o.clock])
 				ax0.set_zorder(int(o.zorders_DL[i][o.clock]))
@@ -68,6 +66,9 @@ def set_data_O1(o, ax_b):
 			ax0.set_transform(M)
 			ax0.set_alpha(o.alphas[o.clock])
 			ax0.set_zorder(int(o.zorders[o.clock]))
+
+		if o.id == 'Nauvis' and 'YearsDays' in P.OBJ_TO_SHOW:
+			o.ax_year_day.set_text(o.years_days[o.clock])
 	elif o.type in ['0_']:
 		M = mtransforms.Affine2D(). \
 			scale(o.scale[o.clock]). \
