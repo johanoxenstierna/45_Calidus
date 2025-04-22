@@ -6,7 +6,7 @@ def jupiter_gi_():
 
     gi = {}
     gi['r'] = 1000  # 5.2
-    gi['pi_offset'] = 0.8 * 2 * np.pi   # 0.2
+    gi['pi_offset'] = 0.2 * 2 * np.pi   # 0.2
     gi['speed_gi'] = 1.5  #1.5
     gi['tilt'] = 0.05 * 2 * np.pi  # 0.15     0.12 * 2 * np.pi  is 45 deg
     gi['scale'] = 0.3
