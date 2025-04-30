@@ -39,12 +39,12 @@ class Rocket(AbstractObject, AbstractSSS):
 
         _s.zorders = np.asarray(_s.zorders)
 
-        if P.WRITE != 0:
-            _s.alphas = norm.pdf(x=np.arange(0, len(_s.xy)), loc=len(_s.xy) / 2, scale=len(_s.xy) / 5)
-            y_range_min, y_range_max = 0.8, 0.9
-            if P.WRITE != 0:
-                y_range_min, y_range_max = 0.1, 0.3
-            _s.alphas = min_max_normalize_array(_s.alphas, y_range=[y_range_min, y_range_max])  # 0.2, 0.7
+        # if P.WRITE != 0:
+        _s.alphas = norm.pdf(x=np.arange(0, len(_s.xy)), loc=len(_s.xy) / 2, scale=len(_s.xy) / 5)
+        y_range_min, y_range_max = 0.1, 0.3  # 0.5 0.9 -> seq
+        # if P.WRITE != 0:
+        #     y_range_min, y_range_max = 0.1, 0.3
+        _s.alphas = min_max_normalize_array(_s.alphas, y_range=[y_range_min, y_range_max])  # 0.2, 0.7
 
         # if P.WRITE != 0:
         _s.gen_color()
@@ -134,7 +134,8 @@ class Rocket(AbstractObject, AbstractSSS):
         xy_i = np.copy(_s.xy[-1, :])
         vxy_i = np.array([_s.xy[-1, 0] - _s.xy[-2, 0], _s.xy[-1, 1] - _s.xy[-2, 1]])  # dictates max speed currently
 
-        num_frames = int(0.8 * _s.gi['frames_max'])  # No need for speed here cuz break
+        # num_frames = int(0.8 * _s.gi['frames_max'])  # No need for speed here cuz break
+        num_frames = 3000  # No need for speed here cuz break
 
         '''OBS len(xy) - 1 GIVES LAST xy ADDED i.e. CURRENT, BUT LOOP BELOW SHOULD USE NEXT VALUES ie range(1, num)
         BCS OTHERWISE AFTER xy.append() the latest xy will be one step ahead of p1, 
@@ -163,12 +164,15 @@ class Rocket(AbstractObject, AbstractSSS):
 
             # NEW: DYNAMIC SPEED_FAR
             if dist > 300:  # IF FAR, USE PARENT SPEED (when p1 is orbiting a planet)
-                speed_far = _s.p1.speed_max0 * 1.05
+                speed_far = _s.p1.speed_max0 * 1.1  # 1.05    # seq: 1.4
             elif dist < 150:  # IF CLOSE, ALLOW FASTER SPEED
-                speed_far = _s.p1.speed_max1 * 1.1
+                speed_far = _s.p1.speed_max1 * 1.05  # 1.1
             else:  # BLENDED
                 t = (dist - 150) / (300 - 150)
-                speed_far = ((1 - t) * _s.p1.speed_max1 + t * _s.p1.speed_max0) * 1.05
+                speed_far = ((1 - t) * _s.p1.speed_max1 + t * _s.p1.speed_max0) * 1.1  # 1.1  # seq: 1.1
+
+            # ONLY SHOW NAUVIS CASE:
+            # speed_far = _s.p1.speed_max0 * 1.01
 
             vxy_new = _pid_pos01 / (np.linalg.norm(_pid_pos01) + 1e-6) * speed_far  #speed_non_smoothed
 

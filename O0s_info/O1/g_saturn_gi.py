@@ -16,9 +16,10 @@ def saturn_gi_():  # 20
     gi['scale'] = 0.5
     gi['centroid_mult'] = 4
 
-    if P.REAL_SCALE:
-        gi['r'] = 0
-        gi['scale'] = 0
-        gi['speed_gi'] = 0
+    if P.REAL_SCALE == 1:
+        gi['r'] = 1500
+        gi['pi_offset'] = 0.05 * 2 * np.pi
+        gi['scale'] = 0.05
+        gi['speed_gi'] = 0.3
 
     return gi

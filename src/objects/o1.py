@@ -80,8 +80,13 @@ class O1C(AbstractObject, AbstractSSS):
             y_squeeze = 0.15
         elif _s.id in ['Jupiter']:
             y_squeeze = 0.3
+            if P.REAL_SCALE == 1:
+                y_squeeze = 0.15
         elif _s.id in ['Saturn', 'Uranus', 'Neptune']:
             y_squeeze = 0.35
+            if P.REAL_SCALE == 1:
+                y_squeeze = 0.15
+
         _s.xy_t = np.zeros((P.FRAMES_TOT_BODIES, 2), dtype=np.float32)
         _s.xy_t[:, 0] = np.sin(np.linspace(0 + _s.gi['pi_offset'], num_rot * 2 * np.pi + _s.gi['pi_offset'], P.FRAMES_TOT_BODIES)) * _s.gi['r']
         _s.xy_t[:, 1] = -np.cos(np.linspace(0 + _s.gi['pi_offset'], num_rot * 2 * np.pi + _s.gi['pi_offset'], P.FRAMES_TOT_BODIES)) * _s.gi['r'] * y_squeeze
@@ -147,6 +152,18 @@ class O1C(AbstractObject, AbstractSSS):
             y_range_hi = 0.2
         elif _s.id in ['Saturn']:
             y_range_hi = 0.4
+
+        if P.REAL_SCALE > 0:
+            alphas0 = np.ones((len(_s.xy_t[:, 1],)))
+            _s.alphas_DL.append(alphas0)
+            _s.alphas_DL.append(alphas0)
+            _s.alphas_DL.append(alphas0)
+
+            zorders0 = np.full((len(_s.xy_t[:, 1],)), fill_value=10000)
+            _s.zorders_DL.append(zorders0)
+            _s.zorders_DL.append(zorders0)
+            _s.zorders_DL.append(zorders0)
+            return
 
         #DARK
         alphas0 = np.copy(_s.xy_t[:, 1])  # DARK  # the more down, the more dark

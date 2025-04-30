@@ -236,7 +236,7 @@ class GenObjects:
 
         R_gi = _s.gis['Rockets']
 
-        for i in range(len(R_gi)):
+        for i in range(len(R_gi)):  # OBS ITERABLE LIST
             # for i in range(1):
             roc_gi = R_gi[i]
 
@@ -250,7 +250,7 @@ class GenObjects:
                 _destination_type = 'orbit'
 
             init_frames = _s.gen_init_frames(p0, p1, roc_gi, _destination_type)
-            # init_frames = [5, 25, 50, 100, 200, 500, 700]
+            init_frames = [25]  #, 25, 50, 100, 200, 500, 700]
 
             for init_frame in init_frames:
 
@@ -261,6 +261,59 @@ class GenObjects:
                 R.append(rocket)
 
             # R.append(rocket2)
+
+        return R
+
+    def gen_rockets_seq(_s, o0calidus):
+
+        R = []
+        # R_gi = _s.gis['Rockets_seq']
+
+        R_gi = [{'od': ['GSS', 'Astro0b'], 'frames_delay': 0},
+                {'od': ['Astro0b', 'Everglade'], 'frames_delay': 100},
+                {'od': ['Everglade', 'GSS'], 'frames_delay': 50}
+                ]
+
+        init_frame = 200
+
+        for i in range(len(R_gi)):  # OBS ITERABLE LIST
+            roc_gi = R_gi[i]
+
+            p0 = o0calidus.O1[roc_gi['od'][0]]
+            p1 = o0calidus.O1[roc_gi['od'][1]]
+
+            _destination_type = 'inter'
+            if (p0.id == 'Nauvis' and p1.id == 'GSS'):
+                _destination_type = 'orbit'
+
+            rocket = Rocket(init_frame=init_frame, gi=roc_gi, p0=p0, p1=p1, destination_type=_destination_type)
+            rocket.gen_rocket_motion()
+
+            init_frame = rocket.frame_ss[1] + roc_gi['frames_delay']
+
+            R.append(rocket)
+
+        R_gi2 = [
+            {'od': ['Ogun', 'Astro0b']},
+            {'od': ['Molli', 'Astro0b']},
+            {'od': ['Everglade', 'Astro0b']}
+        ]
+
+        for i in range(len(R_gi2)):  # OBS ITERABLE LIST
+
+            roc_gi = R_gi2[i]
+
+            p0 = o0calidus.O1[roc_gi['od'][0]]
+            p1 = o0calidus.O1[roc_gi['od'][1]]
+
+            _destination_type = 'inter'
+            if (p0.id == 'Nauvis' and p1.id == 'GSS'):
+                _destination_type = 'orbit'
+
+            rocket = Rocket(init_frame=init_frame, gi=roc_gi, p0=p0, p1=p1, destination_type=_destination_type)
+            rocket.gen_rocket_motion()
+
+            R.append(rocket)
 
         return R
 
@@ -306,9 +359,6 @@ class GenObjects:
 
         init_frames = list(init_frames)
         return init_frames
-
-    def real_scale(_s):
-        aaa = 5
 
 
 

@@ -16,9 +16,10 @@ def uranus_gi_():  # 20
     gi['scale'] = 0.4
     gi['centroid_mult'] = 4
 
-    if P.REAL_SCALE:
-        gi['r'] = 0
-        gi['scale'] = 0
-        gi['speed_gi'] = 0
+    if P.REAL_SCALE == 1:
+        gi['r'] = 3000
+        gi['pi_offset'] = 0.0 * 2 * np.pi
+        gi['scale'] = 0.03
+        gi['speed_gi'] = 0.1
 
     return gi

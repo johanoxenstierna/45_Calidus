@@ -52,6 +52,7 @@ def set_data_O1(o, ax_b):
 						rotate_around(o.centroids[o.clock], o.centroids[o.clock], o.rotation[o.clock]). \
 						translate(o.xy[o.clock][0], o.xy[o.clock][1]). \
 						translate(-o.centroids[o.clock], -o.centroids[o.clock]) + ax_b.transData
+
 				ax0.set_transform(M)
 				ax0.set_alpha(o.alphas_DL[i][o.clock])
 				ax0.set_zorder(int(o.zorders_DL[i][o.clock]))
@@ -86,7 +87,7 @@ def set_data_O1(o, ax_b):
 				scale(1.3, 0.2). \
 				skew(0, 0.3). \
 				translate(260, 215) + ax_b.transData
-		if P.REAL_SCALE:
+		if P.REAL_SCALE == 1:
 			M = mtransforms.Affine2D(). \
 					rotate_around(540, 540, o.rotation[o.clock]). \
 					scale(0.7, 0.1). \

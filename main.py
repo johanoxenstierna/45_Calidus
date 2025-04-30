@@ -29,9 +29,10 @@ writer = Writer(fps=P.FPS, bitrate=3600)  #, extra_args=['-vcodec', 'h264_nvenc'
 if P.WRITE != 0:
     fig, ax_b = plt.subplots(figsize=(19.2, 10.8), dpi=100)
 else:
-    # fig, ax_b = plt.subplots(figsize=(19.2, 10.8), dpi=100)
+    fig, ax_b = plt.subplots(figsize=(19.2, 10.8), dpi=100)
+    # fig, ax_b = plt.subplots(figsize=(19.2, 10.8))
     # fig = plt.figure(figsize=(16, 9), dpi=1920/16)
-    fig = plt.figure(figsize=(12.8, 7.2))
+    # fig = plt.figure(figsize=(12.8, 7.2))
     # fig = plt.figure(figsize=(10, 6))
 
 ax_b = plt.gca()
@@ -48,13 +49,14 @@ axs1 = []
 g = GenObjects()
 g.pics = load_pics()
 g.gis = _genesis()
-g.real_scale()
+# g.real_scale()
 g.gen_backgr(ax_b)
 o0calidus = g.gen_calidus(ax_b)
 g.gen_planets_moons(o0calidus)
 
 if 'Rockets' in P.OBJ_TO_SHOW:
     R = g.gen_rockets(o0calidus)
+    # R = g.gen_rockets_seq(o0calidus)
 
 with open('./vids/gis', 'wb') as f:
     pickle.dump(g.gis, f)
@@ -119,6 +121,7 @@ def animate(i):
                 elif rocket.drawn == 3:
                     prints += "  removing rocket"
                     decrement_all_index_axs0(index_removed, R)
+
 
 
 

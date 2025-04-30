@@ -5,6 +5,7 @@ star wars death metal
 *landingOLDOLDOLD
 *The time it takes/num-actions-required to switch between a skeletal debugging version of the program VS the final upscaled render.
 *Copy-pasting AI code without understanding what it does is NOT scalable. You'll just end up with nasty problems later on.
+*Initial thoughts that ended up being wrong: - Rockets with lots of own info on speed and max_frames, no, everything is planet based.
 
 """
         I've decided to try another approach for the landing. I think the PID controller is too unstable and unnecessarily
